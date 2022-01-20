@@ -19,7 +19,7 @@ const seedrandom = require("seedrandom");
 const waitPairQueue = []; // 等待排序的队列
 const memoryData = {}; // 缓存的房间游戏数据，key => 房间号，value => 游戏数据
 const existUserGameRoomMap = {}; // 缓存用户的房间号， key => 用户标识，value => 房间号
-const roomPlayerLimit = 3;
+const roomPlayerLimit = 1;
 const roundNumLimit = 4;
 const fighterNumLimit = 4;
 const checkCardFee = 50;
@@ -262,15 +262,18 @@ function SendInitDataToAll(roomNumber) {
         tableCards,
         usersList } = memoryData[roomNumber];
     usersList.map((u) => {
-        let currentPlayerHandCards = usersList.map(p => p.userId == u.userId).handCards;
-        let currentPlayerRemainCardsNum = usersList.map(p => p.userId == u.userId).remainCards.length;
+        let cIndex = usersList.findIndex(obj => obj.userId == u.userId);
+        let currentPlayerHandCards = usersList[cIndex].handCards;
+        let currentPlayerRemainCardsNum = usersList[cIndex].remainCards.length;
         let otherPlayerList = [];
-        usersList.map(p => p.userId !== u.userId).map(o => {
-            otherPlayerList.push({
-                money: o.money,
-                handCardsNum: o.handCards.length
-            })
-        })
+        usersList.map(p => {
+            if (p.userId !== u.userId) {
+                otherPlayerList.push({
+                    money: p.money,
+                    handCardsNum: p.handCards.length
+                })
+            }
+        });
         u.socket.emit("INIT_DATA", {
             seed, rand, jackpot, status, currentRound, currentPlayerIndex,
             judgerCard, fightersInfo,
