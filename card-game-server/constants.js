@@ -88,6 +88,50 @@ const AttackAnimationType = {
     NORMAL: 1
 };
 
+
+
+// new
+
+const JudgerList = [
+    {
+        id: 1,
+        name: '老板的侄子',
+        desc: "本回合裁判没有效果",
+        OnBetStage: function(){
+            
+        },
+        OnCardStage: function () {
+            
+        },
+        OnJudgeStage: function () {
+            
+        },
+        OnCalcStage: function () {
+            
+        }
+    }
+];
+
+const FateCardList = [
+    {
+        id: 1,
+        name: 'fate 1',
+        desc: "fate desc 1",
+        OnBetStage: function(){
+            
+        },
+        OnCardStage: function () {
+            
+        },
+        OnJudgeStage: function () {
+            
+        },
+        OnCalcStage: function () {
+            
+        }
+    }
+];
+
 const FighterList = [{
     id: 1,
     name: "fighter1",
@@ -96,7 +140,17 @@ const FighterList = [{
     healthBase: 1,
     magicBase: 1,
     desc: "test content 1",
-    // todo
+    // 倍率
+    magnification: 1.0,
+    OnCardStage: function () {
+        
+    },
+    OnJudgeStage: function () {
+        
+    },
+    OnCalcStage: function () {
+        
+    }
 }, {
     id: 2,
     name: "fighter2",
@@ -105,6 +159,8 @@ const FighterList = [{
     healthBase: 2,
     magicBase: 2,
     desc: "test content 2",
+    // 倍率
+    magnification: 1.0,
     // todo
 }, {
     id: 3,
@@ -114,6 +170,8 @@ const FighterList = [{
     healthBase: 3,
     magicBase: 3,
     desc: "test content 3",
+    // 倍率
+    magnification: 1.0,
     // todo
 }, {
     id: 4,
@@ -123,6 +181,8 @@ const FighterList = [{
     healthBase: 4,
     magicBase: 4,
     desc: "test content 4",
+    // 倍率
+    magnification: 1.0,
     // todo
 }];
 
@@ -132,5 +192,7 @@ module.exports = {
     AttackType,
     AttackAnimationType,
 
-    Fighters:FighterList
+    Fighters: FighterList,
+    Judgers: JudgerList,
+    FateCards: FateCardList,
 }
