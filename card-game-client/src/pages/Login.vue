@@ -3,10 +3,10 @@
         <div class="screen">
             <div class="title-content">
                 <h1 class="main-title">
-                    你的文字
+                    决斗会社
                 </h1>
                 <h1 class="main-title main-title2">
-                    你的文字
+                    决斗会社
                 </h1>
             </div>
             
@@ -71,6 +71,7 @@ export default {
 
         loop();
 
+        let originTitle = document.querySelector('.title-content');
         let title = document.querySelector('.main-title2');
         let shake = 3;
         function animateTitle() {
@@ -78,10 +79,18 @@ export default {
 
             for (let i = 50; i--;) {
                 if (!animateChaning) {
-                    animateChaning = Velocity(title, {opacity: R(0, 1), top: R(-shake, shake), left: R(-shake, shake)}, {duration: R(30, 170)});
+                    animateChaning = Velocity(title, {
+                        opacity: R(0, 1), 
+                        top: R(-shake, shake), 
+                        left: originTitle.clientWidth* 0.5 + R(-shake, shake)}, 
+                        {duration: R(30, 170)});
                 } else {
                     animateChaning = animateChaning.then(() => {
-                        return Velocity(title, {opacity: R(0, 1), top: R(-shake, shake), left: R(-shake, shake)}, {duration: R(30, 170)});
+                        return Velocity(
+                            title, {
+                                opacity: R(0, 1), 
+                                top: R(-shake, shake), 
+                                left: originTitle.clientWidth * 0.5 + R(-shake, shake)}, {duration: R(30, 170)});
                     })
                 }
             }
@@ -142,7 +151,7 @@ export default {
 
 .title-content{ 
 	position:relative; 
-	width: 370px;
+	width: 80%;
     height: 500px; 
 }
 .main-title {
@@ -150,13 +159,18 @@ export default {
     height: 500px;
     padding: .3em 1em .25em;    
     font-weight: 400;
-    font-size: 40px;
+    font-size: 80px;
     color: white;
     position:relative;
     line-height:1.3;
     position:absolute;
     top:0;
-    left:0;
+    left:50%;
+    transform: translate(-50%, 0%);
+}
+
+.main-title2 {
+    transform: translate(-50%, 0%);
 }
 
 .noise {

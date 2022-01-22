@@ -2,322 +2,81 @@
     <div class="app">
         <div class="table">
             <transition-group 
-                class="other-card-area"
+                class="other_player_area"
                 tag="div"
                 :css="false"
                 @enter="enter"
                 @before-enter="beforeEnter"
                 @after-enter="afterEnter"
             >
-                <Card 
-                    :key="c.k"
+                <!-- <OtherPlayerInfoBlock 
+                    :key="p.memberIndex"
                     :index="index"
-                    :data="c"
-                    v-for="(c, index) in gameData.otherTableCard"
-                />
+                    :data="p"
+                    v-for="(p, index) in gameData.otherPlayerList"
+                /> -->
+                other player info cards
             </transition-group >
-            <transition-group 
-                class="my-card-area"
-                tag="div"
-                :css="false"
-                @enter="enter"
-                @before-enter="beforeEnter"
-                @after-enter="afterEnter"
-            >
-                <Card 
-                    :key="c.k"
-                    :index="index"
-                    :data="c"
-                    :isOut="true"
-                    @onAttackStart="onAttackStart"
-                    :chooseCard="chooseTableCard"
-                    v-for="(c, index) in gameData.myTableCard"
-                />
-            </transition-group >
-        </div>
 
-        <div class="my-card">
-            <Card 
-                :key="c.k"
-                :index="index"
-                :data="c"
-                :canDrag="true"
-                :chooseCard="chooseHandCard"
-                v-for="(c, index) in gameData.myCard"
-            />
-        </div>
+            <div class="table_area">
+                <div class ="fate_judger_area">
+                    fate card and judger card
+                </div>
 
-        <div class="match-dialog-container" v-show="matchDialogShow">
-            正在匹配，请等待
-        </div>
+                <div class ="fighters_area">
+                    fighters list
+                </div>
 
-        <canvas id="animationCanvas" v-show="showCanvas" :width="windowWidth" :height="windowHeight"></canvas>
+                <div class ="table_cards_area">
+                    table card list
+                </div>
+            </div>
+
+            <div class="my_area">
+                <div class="my_basic_info">
+                    my basic info: money/personal
+                </div>
+
+                <transition-group
+                    class="my_hand_cards"
+                    tag="div"
+                    :css="false"
+                    @enter="enter"
+                    @before-enter="beforeEnter"
+                    @after-enter="afterEnter"
+                >
+                    <!-- <Card 
+                        :key="c.k"
+                        :index="index"
+                        :data="c"
+                        :isOut="true"
+                        :todo = "todo"
+                        @onAttackStart="onAttackStart"
+                        :chooseCard="chooseTableCard"
+                        v-for="(c, index) in gameData.handCards"
+                    /> -->
+                    hand cards
+                </transition-group>
+
+                <div class="my_remain_cards_info">
+                    remain cards number
+                </div>
+            </div>
+            
+        </div>
     </div>
 </template>
 
 <script>
-import * as io from "socket.io-client";
-import Card from "../components/Card"
+// import * as io from "socket.io-client";
+// import Card from "../components/Card"
+// import OtherPlayerInfoBlock from "../components/OtherPlayerInfoBlock"
 import Velocity from 'velocity-animate';
-import {AttackType} from "../utils"
 
 export default {
     name: "GameTable",
-    components: {Card},
-    data() {
-        return {
-            matchDialogShow: false,
-            count: 0,
-            userId: new Date().getTime(),
-            showCanvas: false,
-
-            windowWidth: 1920,
-            windowHeight: 1080,
-
-            gameData: {
-                myCard: [], // 手牌
-            },
-
-            currentCardIndex: -1
-        };
-    },
-    mounted() {
-        this.socket = io.connect("http://localhost:4001");
-
-        this.socket.emit("COMMAND", {
-            type: "CONNECT",
-            userId: this.userId
-        });
-        this.socket.on("WAITE", () => {
-            this.matchDialogShow = true;
-        });
-
-        this.socket.on("START", result => {
-            this.count = result.start;
-            this.matchDialogShow = false;
-            this.roomNumber = result.roomNumber;
-        });
-
-        this.socket.on("UPDATE", args => {
-            this.count = args.count;
-        });
-
-        this.socket.on("ATTACK_CARD", (param) => {
-            if (param.attackType === AttackType.ATTACK) {
-                this.attackAnimate(param.index, param.attackIndex)
-            } else {
-                this.attackAnimate(param.attackIndex, param.index)
-            }
-        });
-
-        this.socket.on("DIE_CARD", (param) => {
-            const {isMine, myKList, otherKList} = param;
-
-            let myCardList, otherCardList;
-            
-            if (isMine) {
-                myCardList = this.gameData.myTableCard;
-                otherCardList = this.gameData.otherTableCard;
-            } else {
-                myCardList = this.gameData.otherTableCard;
-                otherCardList = this.gameData.myTableCard;
-            }
-
-            setTimeout(() => {
-                myKList.forEach((k) => {
-                    let index = myCardList.findIndex(c => c.k === k);
-                    myCardList.splice(index, 1);
-                });
-
-                otherKList.forEach((k) => {
-                    let index = otherCardList.findIndex(c => c.k === k);
-                    otherCardList.splice(index, 1);
-                })
-            }, 920);
-            
-        });
-
-        this.socket.on("SEND_CARD", (param) => {
-            this.gameData = Object.assign({}, this.gameData, param);
-        });
-
-        this.socket.on("OUT_CARD", (param) => {
-            const {index, card, isMine} = param;
-
-            if (isMine) {
-                if (index !== -1) {
-                    this.gameData.myCard.splice(index, 1);
-                }
-
-                this.gameData.myTableCard.push(card)
-            } else {
-                this.gameData.otherTableCard.push(card)
-            }
-        })
-
-        this.windowWidth = window.innerWidth;
-        this.windowHeight = window.innerHeight;
-
-        window.onresize = () => {
-            this.windowWidth = window.innerWidth;
-            this.windowHeight = window.innerHeight;
-        }
-        this.registerOutCardEvent();
-
-        this.myCardAreaDom = document.querySelector(".my-card-area");
-        this.otherCardAreaDom = document.querySelector(".other-card-area");
-    },
-    methods: {
-        add() {
-            this.socket.emit("ADD", {
-                userId: this.userId
-            });
-        },
-
-        registerOutCardEvent() {
-            this.canvasContext = document.querySelector("#animationCanvas").getContext("2d");
-
-            window.onmousemove = (e) => {
-                if (window.isCardDrag) {
-                    window.cardMoveX = e.pageX;
-                    window.cardMoveY = e.pageY;
-                }
-
-                if (window.isAttackDrag) {
-                    window.requestAnimationFrame(() => {
-                        // 绘制攻击箭头开始
-                        this.canvasContext.clearRect(0, 0, this.windowWidth, this.windowHeight);
-                        this.canvasContext.strokeStyle = 'maroon';
-                        this.canvasContext.fillStyle = 'maroon';
-
-
-                        this.canvasContext.save();
-                        this.canvasContext.setLineDash([40, 10]);
-                        this.canvasContext.lineWidth = 30;
-
-                        this.canvasContext.beginPath();
-                        this.canvasContext.moveTo(this.attackStartX, this.attackStartY);
-                        this.canvasContext.lineTo(e.pageX, e.pageY);
-                        this.canvasContext.fill();
-                        this.canvasContext.stroke();
-                        this.canvasContext.restore();
-
-                        this.canvasContext.save();
-                        this.canvasContext.beginPath();
-                        this.canvasContext.lineCap = 'square';
-                        this.canvasContext.translate(e.pageX, e.pageY);
-                        let getLineRadians = () => { // 计算直线当前的角度
-                            let _a = e.pageX - this.attackStartX;
-                            let _b = e.pageY - this.attackStartY;
-                            let _c = Math.hypot(_a, _b);
-                            return Math.acos(_a / _c) * Math.sign(_b);
-                        };
-                        this.canvasContext.rotate(getLineRadians() - Math.PI /2);
-                        this.canvasContext.moveTo(35, -40);
-                        this.canvasContext.lineTo(0, 25);
-                        this.canvasContext.lineTo(-35, -40);
-                        this.canvasContext.lineTo(35, -40);
-                        this.canvasContext.fill();
-                        this.canvasContext.stroke();
-                        this.canvasContext.restore();
-                        // 绘制攻击箭头结束
-                    })
-                }
-            }
-
-            window.onmouseup = (e) => {
-                if (window.isCardDrag && this.currentCardIndex !== -1) {
-                    window.isCardDrag = false;
-
-                    let top = this.myCardAreaDom.offsetTop,
-                        width = this.myCardAreaDom.offsetWidth,
-                        left = this.myCardAreaDom.offsetLeft,
-                        height = this.myCardAreaDom.offsetHeight;
-
-                    let x = e.pageX,
-                        y = e.pageY;
-
-                    if (x > left && x < (left + width) && y > top && y < (top + height)) {
-                        this.socket.emit("COMMAND", {
-                            type: "OUT_CARD",
-                            r: this.roomNumber,
-                            index: this.currentCardIndex
-                        })
-                    }
-                }
-
-                if (window.isAttackDrag) {
-                    window.isAttackDrag = false;
-                    this.showCanvas = false;
-                    this.canvasContext.clearRect(0, 0, this.windowWidth, this.windowHeight);
-
-                    let x = e.pageX, // 鼠标松开的x
-                        y = e.pageY, // 鼠标松开的y
-                        k = -1; // 用于记录找到的卡牌的index
-
-                    this.otherCardAreaDom.childNodes.forEach(cd => { // 循环遍历对手的卡牌dom
-                        let top = cd.offsetTop,
-                            width = cd.offsetWidth,
-                            left = cd.offsetLeft,
-                            height = cd.offsetHeight;
-
-                        if (x > left && x < (left + width) && y > top && y < (top + height)) { // 边缘检测
-                            k = cd.dataset.k;
-
-                            this.attackCard(k);
-                        }
-                    });
-                }
-            }
-        },
-
-        onAttackStart({startX, startY}) {
-            this.showCanvas = true;
-            window.isAttackDrag = true;
-            this.attackStartX = startX;
-            this.attackStartY = startY;
-        },
-
-        attackCard(k) {
-            this.socket.emit("COMMAND", {
-                type: "ATTACK_CARD",
-                r: this.roomNumber,
-                myK: this.currentTableCardK,
-                attackK: k
-            })
-        },
-
-        attackAnimate(from, to) {
-            let myDom = this.myCardAreaDom.childNodes[from];
-            let otherDom = this.otherCardAreaDom.childNodes[to];
-
-            let h = otherDom.offsetLeft - myDom.offsetLeft;
-            let v = otherDom.offsetTop + otherDom.offsetHeight - myDom.offsetTop - myDom.parentElement.offsetTop;
-
-            Velocity(myDom, { translateX: h, translateY: v }, {
-                easing: 'ease-in',
-                duration: 200,
-                begin: () => {
-                    myDom.style['transition'] = 'all 0s';
-                }
-            }).then(el => {
-                return Velocity(el, { translateX: 0, translateY: 0 }, {
-                    easing: 'ease-out',
-                    duration: 300,
-                    complete: () => {
-                        myDom.style['transition'] = 'all 0.2s';
-                    }
-                })
-            })
-        },
-
-        chooseTableCard(index) {
-            this.currentTableCardK = this.gameData.myTableCard[index].k; 
-        },
-
-        chooseHandCard(index) {
-            this.currentCardIndex = index;
-        },
+    // components: {Card},
+    methods:{
         beforeEnter(el) {
             el.style['transition'] = "all 0s";
             el.style.opacity = 0
@@ -337,10 +96,11 @@ export default {
             el.style.transform = '';
         }
     }
-};
+}
 </script>
 
 <style scoped>
+
     .app {
         width: 100%;
         height: 100%;
@@ -348,36 +108,14 @@ export default {
         user-select: none;
     }
 
-    .my-card {
-        position: absolute;
-        bottom: 20px;
-        width: 100%;
-        min-height: 170px;
-        display: flex;
-        justify-content: center;
-        background: #f00;
-    }
-
     .table {
         width: 100%;
         height: 100%;
     }
 
-    .my-card-area {
-        width: 100%;
-        height: 33%;
-        min-height: 170px;
-        position: absolute;
-        bottom: 210px;
-        display: flex;
-        padding: 10px;
-        box-sizing: border-box;
-        justify-content: center;
-        background-color: #0f0;
-    }
-
-    .other-card-area {
-        width: 100%;
+    .other_player_area{
+        width: 60%;
+        height: 20%;
         min-height: 170px;
         display: flex;
         padding: 10px;
@@ -387,26 +125,70 @@ export default {
         background-color: #00f;
     }
 
-    .match-dialog-container {
-        position: absolute;
+    .my_area{
         width: 100%;
-        height: 100%;
-        left: 0;
-        top: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 20px;
-        background: rgba(0, 0, 0, 0.5);
-        color: white;
+        height: 25%;
+        min-height: 170px;
+        position: absolute;
+        bottom: 0px;
+        /* display: flex; */
+        padding: 10px;
+        box-sizing: border-box;
+        /* justify-content: center; */
+        background-color: #0f0;
     }
 
-    #animationCanvas {
-        width: 100%;
+    .my_basic_info{
+        background-color: grey;
+        width: 200px;
         height: 100%;
         position: absolute;
-        left: 0;
-        top: 0;
-        z-index: 999;
+        left: 0px;
+        top:0px;
+    }
+
+    .my_remain_cards_info{
+        background-color: grey;
+        width: 200px;
+        height: 100%;
+        position: absolute;
+        right: 0px;
+        top:0px;
+    }
+
+    .my_hand_cards {
+        height: 100%;
+        margin-left: 200px;
+        margin-right: 200px;
+        background-color: white;
+    }
+
+    .table_area{
+        background-color: rgb(31, 255, 255);
+        height: 55%;
+        width: 100%;
+    }
+
+    .fate_judger_area{
+        background-color: rgb(109, 58, 250);
+        width: 12.5%;
+        height: 100%;
+        float: left;
+    }
+
+    .fighters_area{
+        background-color: rgb(250, 58, 250);
+        height: 100%;
+        margin-left: 12.5%;
+        margin-right: 35%;
+    }
+
+    .table_cards_area{
+        background-color: rgb(215, 250, 58);
+        width: 55%;
+        position: absolute;
+        right: 0px;
+        top: 20%;
+        height: 55%;
     }
 </style>
