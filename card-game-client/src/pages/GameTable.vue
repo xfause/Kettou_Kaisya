@@ -63,12 +63,24 @@
                 </div>
             </div>
             
+            <div class="match-dialog-container" 
+                v-show="matchDialogShow">
+                正在匹配，请等待
+            </div>
+
+            <canvas 
+                id="animationCanvas" 
+                v-show="showCanvas" 
+                :width="windowWidth" 
+                :height="windowHeight">
+            </canvas>
+
         </div>
     </div>
 </template>
 
 <script>
-// import * as io from "socket.io-client";
+import * as io from "socket.io-client";
 // import Card from "../components/Card"
 // import OtherPlayerInfoBlock from "../components/OtherPlayerInfoBlock"
 import Velocity from 'velocity-animate';
@@ -76,6 +88,127 @@ import Velocity from 'velocity-animate';
 export default {
     name: "GameTable",
     // components: {Card},
+
+    // table page data structs
+    data(){
+        return {
+            matchDialogShow: false,
+            // todo
+            count: 0,
+            userId: new Date().getTime(),
+            showCanvas: false,
+
+            windowWidth: 1920,
+            windowHeight: 1080,
+
+            // for drag and use card index
+            currentCardIndex: -1,
+
+            gameData: {
+                memberIndex: -1,
+                roomNumber: -1,
+
+                jackpot: 0,
+                status: "",
+                currentRound: 0,
+                currentPlayerIndex: -1,
+                judgerCard: null,
+                fateCard: null,
+                fightersInfo: [],
+                tableCards: [],
+                preUseCardFee: 0,
+                preUseCardPlayerIndex: -1,
+                handCards: [],
+                remainCardsNum: -1,
+                otherPlayerList: []
+            }
+        }
+    },
+
+    mounted(){
+        this.socket = io.connect("http://localhost:4001");
+
+        // connect to room
+        this.socket.emit("COMMAND", {
+            type: "CONNECT",
+            userId: this.userId
+        });
+
+        // wait in queue
+        this.socket.on("WAITE", () => {
+            this.matchDialogShow = true;
+        });
+
+        // reconnect to game
+        this.socket.on("RECONNECT", (result) => {
+            this.gameData.roomNumber = result.roomNumber;
+            this.gameData.memberIndex = result.memberIndex;
+        });
+        this.socket.on("RESTORE_DATA",(result)=>{
+            this.RestoreGameData(result);
+        });
+
+        // game start initial data
+        this.socket.on("INIT_DATA", (result)=>{
+            this.SetInitGameData(result);
+        });
+
+        // player bet on fighters change
+        this.socket.on("AFTER_BET_DATA",(result)=>{
+            this.OnPlayerBetFighters(result);
+        })
+
+        // change room stage
+        this.socket.on("CHANGE_ROOM_STAGE", (result)=>{
+            this.OnChangeRoomStage(result);
+        });
+
+        // my check card
+        this.socket.on("MY_CHECK_CARD", (result)=>{
+            this.OnMyCheckCard(result);
+        })
+
+        // other check card
+        this.socket.on("OTHER_CHECK_CARD", (result)=>{
+            this.OnOtherCheckCard(result)
+        })
+
+        // player fold card
+        this.socket.on("FOLD_CARD",(result)=>{
+            this.OnPlayerFoldCard(result);
+        })
+
+        // my use card
+        this.socket.on("MY_USE_CARD",(result)=>{
+            this.OnMyUseCard(result);
+        })
+
+        // other use card
+        this.socket.on("OTHER_USE_CARD",(result)=>{
+            this.OnOtherUseCard(result);
+        })
+
+        // player end use card
+        this.socket.on("END_USE_CARD",(result)=>{
+            this.OnEndUseCard(result);
+        })
+
+        // judge stage -> active card
+        this.socket.on("JUDGE_ACTIVE_CARD",(result)=>{
+            this.OnJudgeStageActiveCard(result);
+        })
+
+        // get winner fighter index
+        this.socket.on("WINNER_FIGHTER", (result)=>{
+            this.GetWinnerFighter(result);
+        })
+
+        // after all rounds game end
+        this.socket.on("GAME_END", (result)=>{
+            this.OnGameEnd(result);
+        })
+    },
+
     methods:{
         beforeEnter(el) {
             el.style['transition'] = "all 0s";
@@ -94,7 +227,110 @@ export default {
             el.style['transition'] = "all 0.2s";
             el.style.opacity = 1;
             el.style.transform = '';
+        },
+
+        RestoreGameData(result){
+            // todo
+            // jackpot, status, currentRound, currentPlayerIndex,
+            // judgerCard, fateCard, fightersInfo,
+            // tableCards,
+            // preUseCardFee, preUseCardPlayerIndex,
+            // handCards,remainCardsNum,
+            // otherPlayerList,
+        },
+
+        SetInitGameData(result){
+            // todo
+            // jackpot, status, currentRound, currentPlayerIndex,
+            // judgerCard, fightersInfo,
+            // tableCards,
+            // preUseCardFee, preUseCardPlayerIndex,
+            // handCards, remainCardsNum,
+            // otherPlayerList
+        },
+
+        OnPlayerBetFighters(result){
+            // todo
+            // fightersInfo: memoryData[roomNumber]["fightersInfo"],
+            // playerBetStatus: memoryData[roomNumber][usersList].map(o => {
+            //     return {
+            //         status: o.status,
+            //         memberIndex: o.memberIndex,
+            //         userId: o.userId,
+            //         money: o.money,
+            //         currentPlayerIndex: memoryData[roomNumber].currentPlayerIndex
+            //     }
+            // })
+        },
+
+        OnChangeRoomStage(result){
+            const {status} = result;
+            this.gameData.status = status;
+            if (status == "CARD") {
+                const {fateCard} = result;
+                this.gameData.fateCard = fateCard;
+            } 
+            // else if (status == "JUDGE") {
+            // } else if (status == "CALC") {
+            // }
+        },
+
+        OnMyCheckCard(result){
+            // todo
+        },
+
+        OnOtherCheckCard(result){
+            // todo
+            // jackpot: memoryData[roomNumber].jackpot,
+            // prePlayerIndex: currUserIndex,
+            // money: memoryData[roomNumber][usersList][currUserIndex].money,
+            // handCardsNum: memoryData[roomNumber][usersList][currUserIndex].handCards.length,
+            // currentPlayerIndex: memoryData[roomNumber].currentPlayerIndex
+        },
+
+        OnPlayerFoldCard(result){
+            // todo
+            // preFoldPlayerIndex,currentPlayerIndex
+        },
+
+        OnMyUseCard(result){
+            // todo
+            // tableCards, handCards, jackpot, status
+        },
+
+        OnOtherUseCard(result){
+            // todo
+            // useCardPlayerIndex,useCardPlayerHandCardsNumber,
+            // jackpot,preUseCardFee,tableCards
+        },
+
+        OnEndUseCard(result){
+            // todo
+            // status currentPlayerIndex
+        },
+
+        OnJudgeStageActiveCard(result){
+            // todo
+            // jackpot, status,
+            // currentRound, currentPlayerIndex,
+            // judgerCard, fateCard, fightersInfo,
+            // tableCards,
+            // preUseCardFee, preUseCardPlayerIndex,
+            // handCards, remainCardsNum,
+            // otherPlayerList
+        },
+
+        GetWinnerFighter(result){
+            // todo
+            // winnerFighterIndex
+        },
+
+        OnGameEnd(result){
+            // todo
+            // rankList
         }
+        
+
     }
 }
 </script>
