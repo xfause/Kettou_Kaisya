@@ -89,12 +89,13 @@ module.exports = function handleSynchronousClient(args, socket, socketServer) {
         case "CONNECT":
             Connect(args, socket, socketServer);
             break;
-        case "ATTACK_CARD":
-            attackCard(args, socket);
-            break;
-        case "OUT_CARD":
-            outCard(args, socket);
-            break;
+        
+        // case "ATTACK_CARD":
+        //     attackCard(args, socket);
+        //     break;
+        // case "OUT_CARD":
+        //     outCard(args, socket);
+        //     break;
         
         // todo
         case "BET_ON_FIGHTERS":
@@ -265,11 +266,15 @@ function SendInitDataToAll(roomNumber) {
         let cIndex = usersList.findIndex(obj => obj.userId == u.userId);
         let currentPlayerHandCards = usersList[cIndex].handCards;
         let currentPlayerRemainCardsNum = usersList[cIndex].remainCards.length;
+        let currPlayerMoney = usersList[cIndex].money;
+        let currPlayerStatus = usersList[cIndex].status;
+        let currPlayerMemberIndex = usersList[cIndex].memberIndex;
         let otherPlayerList = [];
         usersList.map(p => {
             if (p.userId !== u.userId) {
                 otherPlayerList.push({
                     money: p.money,
+                    memberIndex: p.memberIndex,
                     handCardsNum: p.handCards.length
                 })
             }
@@ -281,6 +286,11 @@ function SendInitDataToAll(roomNumber) {
             preUseCardFee, preUseCardPlayerIndex,
             handCards: currentPlayerHandCards,
             remainCardsNum: currentPlayerRemainCardsNum,
+            myInfos: {
+                money: currPlayerMoney,
+                status: currPlayerStatus,
+                memberIndex: currPlayerMemberIndex,
+            },  
             otherPlayerList
         })
     });
@@ -309,6 +319,11 @@ function RestoreGameData(roomNumber, userId) {
         preUseCardFee, preUseCardPlayerIndex,
         handCards: player.handCards,
         remainCardsNum: player.remainCards.length,
+        myInfos: {
+            money: player.money,
+            status: player.status,
+            memberIndex: player.memberIndex,
+        }, 
         otherPlayerList,
     });
 }
@@ -383,6 +398,9 @@ function OnCheckCard(args, socket) {
         memoryData[roomNumber].usersList,
         roomPlayerLimit
     );
+
+    // todo 
+    // check judger / fate card effect
     var t = GetNextCard(memoryData[roomNumber][usersList][currUserIndex].remainCards)
     if (t !== null) {
         memoryData[roomNumber][usersList][currUserIndex].handCards.push(t);
@@ -401,7 +419,7 @@ function OnCheckCard(args, socket) {
         if (p.memberIndex !== memberIndex) {
             p.socket.emit("OTHER_CHECK_CARD", {
                 jackpot: memoryData[roomNumber].jackpot,
-                prePlayerIndex: currUserIndex,
+                prePlayerIndex:  memoryData[roomNumber][usersList][currUserIndex].memberIndex,
                 money: memoryData[roomNumber][usersList][currUserIndex].money,
                 handCardsNum: memoryData[roomNumber][usersList][currUserIndex].handCards.length,
                 currentPlayerIndex: memoryData[roomNumber].currentPlayerIndex
@@ -508,6 +526,7 @@ function OnEndUseCard(args, socket) {
 
     memoryData[roomNumber].usersList.map(p => {
         p.socket.emit("END_USE_CARD", {
+            status: memoryData[roomNumber][usersList][currUserIndex].status,
             currentPlayerIndex: memoryData[roomNumber].currentPlayerIndex
         });
     });
