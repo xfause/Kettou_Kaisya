@@ -120,7 +120,8 @@ export default {
                 preUseCardPlayerIndex: -1,
                 handCards: [],
                 remainCardsNum: -1,
-                otherPlayerList: []
+                otherPlayerList: [],
+                myInfos: null,
             }
         }
     },
@@ -230,37 +231,65 @@ export default {
         },
 
         RestoreGameData(result){
-            // todo
-            // jackpot, status, currentRound, currentPlayerIndex,
-            // judgerCard, fateCard, fightersInfo,
-            // tableCards,
-            // preUseCardFee, preUseCardPlayerIndex,
-            // handCards,remainCardsNum,
-            // otherPlayerList,
+            const {
+                jackpot, status, currentRound, currentPlayerIndex,
+                judgerCard, fateCard, fightersInfo,
+                tableCards,
+                preUseCardFee, preUseCardPlayerIndex,
+                handCards, remainCardsNum,
+                myInfos,
+                otherPlayerList
+            } = result
+            this.gameData.jackpot = jackpot;
+            this.gameData.status = status;
+            this.gameData.currentRound = currentRound;
+            this.gameData.currentPlayerIndex = currentPlayerIndex;
+            this.gameData.judgerCard = judgerCard;
+            this.gameData.fateCard = fateCard;
+            this.gameData.fightersInfo = fightersInfo;
+            this.gameData.tableCards = tableCards;
+            this.gameData.preUseCardFee = preUseCardFee;
+            this.gameData.preUseCardPlayerIndex = preUseCardPlayerIndex;
+            this.gameData.handCards = handCards;
+            this.gameData.remainCardsNum = remainCardsNum;
+            this.gameData.myInfos = myInfos;
+            this.gameData.otherPlayerList = otherPlayerList;
         },
 
         SetInitGameData(result){
-            // todo
-            // jackpot, status, currentRound, currentPlayerIndex,
-            // judgerCard, fightersInfo,
-            // tableCards,
-            // preUseCardFee, preUseCardPlayerIndex,
-            // handCards, remainCardsNum,
-            // otherPlayerList
+            const {
+                jackpot, status, currentRound, currentPlayerIndex,
+                judgerCard, fateCard, fightersInfo,
+                tableCards,
+                preUseCardFee, preUseCardPlayerIndex,
+                handCards, remainCardsNum,
+                myInfos,
+                otherPlayerList
+            } = result
+            this.gameData.jackpot = jackpot;
+            this.gameData.status = status;
+            this.gameData.currentRound = currentRound;
+            this.gameData.currentPlayerIndex = currentPlayerIndex;
+            this.gameData.judgerCard = judgerCard;
+            this.gameData.fateCard = fateCard;
+            this.gameData.fightersInfo = fightersInfo;
+            this.gameData.tableCards = tableCards;
+            this.gameData.preUseCardFee = preUseCardFee;
+            this.gameData.preUseCardPlayerIndex = preUseCardPlayerIndex;
+            this.gameData.handCards = handCards;
+            this.gameData.remainCardsNum = remainCardsNum;
+            this.gameData.myInfos = myInfos;
+            this.gameData.otherPlayerList = otherPlayerList;
         },
 
         OnPlayerBetFighters(result){
-            // todo
-            // fightersInfo: memoryData[roomNumber]["fightersInfo"],
-            // playerBetStatus: memoryData[roomNumber][usersList].map(o => {
-            //     return {
-            //         status: o.status,
-            //         memberIndex: o.memberIndex,
-            //         userId: o.userId,
-            //         money: o.money,
-            //         currentPlayerIndex: memoryData[roomNumber].currentPlayerIndex
-            //     }
-            // })
+            // playerBetStatus:{
+            //     status, memberIndex
+            //     userId, money,
+            //     currentPlayerIndex
+            // }
+            const {fightersInfo} = result;
+            this.gameData.fightersInfo = fightersInfo;
         },
 
         OnChangeRoomStage(result){
@@ -276,16 +305,32 @@ export default {
         },
 
         OnMyCheckCard(result){
-            // todo
+            // handCards,remainCardsNum,
+            // money, jackpot, currentPlayerIndex
+            const {handCards, remainCardsNum, 
+                money, jackpot, currentPlayerIndex
+            } = result;
+            this.gameData.handCards = handCards;
+            this.gameData.remainCardsNum = remainCardsNum;
+            this.gameData.myInfos.money = money;
+            this.gameData.jackpot = jackpot;
+            this.gameData.currentPlayerIndex = currentPlayerIndex;
         },
 
         OnOtherCheckCard(result){
-            // todo
-            // jackpot: memoryData[roomNumber].jackpot,
-            // prePlayerIndex: currUserIndex,
-            // money: memoryData[roomNumber][usersList][currUserIndex].money,
-            // handCardsNum: memoryData[roomNumber][usersList][currUserIndex].handCards.length,
-            // currentPlayerIndex: memoryData[roomNumber].currentPlayerIndex
+            // jackpot,
+            // prePlayerIndex,
+            // money,
+            // handCardsNum
+            // currentPlayerIndex
+            const {jackpot, prePlayerIndex, money,
+                handCardsNum, currentPlayerIndex
+            } = result;
+            this.gameData.jackpot = jackpot;
+            this.gameData.currentPlayerIndex = currentPlayerIndex;
+            let changedPlayerIndex = this.gameData.otherPlayerList.findIndex(obj=>obj.memberIndex == prePlayerIndex);
+            this.gameData.otherPlayerList[changedPlayerIndex].money = money;
+            this.gameData.otherPlayerList[changedPlayerIndex].handCardsNum = handCardsNum;
         },
 
         OnPlayerFoldCard(result){
@@ -329,8 +374,6 @@ export default {
             // todo
             // rankList
         }
-        
-
     }
 }
 </script>
