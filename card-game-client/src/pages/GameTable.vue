@@ -1,26 +1,43 @@
 <template>
     <div class="app">
         <div class="table">
-            <transition-group 
-                class="other_player_area"
-                tag="div"
-                :css="false"
-                @enter="enter"
-                @before-enter="beforeEnter"
-                @after-enter="afterEnter"
-            >
-                <!-- <OtherPlayerInfoBlock 
-                    :key="p.memberIndex"
-                    :index="index"
-                    :data="p"
-                    v-for="(p, index) in gameData.otherPlayerList"
-                /> -->
-                other player info cards
-            </transition-group >
+            <div class="top_area">
+                <transition-group 
+                    class="other_player_area"
+                    tag="div"
+                    :css="false"
+                    @enter="enter"
+                    @before-enter="beforeEnter"
+                    @after-enter="afterEnter"
+                >
+                    <!-- <OtherPlayerInfoBlock 
+                        :key="p.memberIndex"
+                        :index="index"
+                        :data="p"
+                        v-for="(p, index) in gameData.otherPlayerList"
+                    /> -->
+                    other player info cards
+                </transition-group >
+
+                <div class="room_info_area">
+                    <RoomInfo
+                        :currentRound="gameData.currentRound"
+                        :roundNumLimit="gameData.roundNumLimit"
+                        :jackpot="gameData.jackpot"
+                        :status="gameData.status"
+                    />
+                </div>
+            </div>
 
             <div class="table_area">
                 <div class ="fate_judger_area">
-                    fate card and judger card
+                    <JudgerCard 
+                        :judgerCard="gameData.judgerCard"
+                    />
+
+                    <FateCard 
+                        :fateCard="gameData.fateCard"
+                    />
                 </div>
 
                 <div class ="fighters_area">
@@ -34,7 +51,11 @@
 
             <div class="my_area">
                 <div class="my_basic_info">
-                    my basic info: money/personal
+                    <MyBasicInfo 
+                        :memberIndex="gameData.myInfos.memberIndex"
+                        :status="gameData.myInfos.status"
+                        :money="gameData.myInfos.money"
+                    />
                 </div>
 
                 <transition-group
@@ -59,7 +80,9 @@
                 </transition-group>
 
                 <div class="my_remain_cards_info">
-                    remain cards number
+                    <RemainCards
+                        :remainCardsNum="gameData.remainCardsNum"
+                    />
                 </div>
             </div>
             
@@ -81,13 +104,21 @@
 
 <script>
 import * as io from "socket.io-client";
+import RoomInfo from "../components/RoomInfo";
+import MyBasicInfo from "../components/MyBasicInfo";
+import RemainCards from "../components/RemainCards";
+import JudgerCard from "../components/JudgerCard";
+import FateCard from "../components/FateCard";
 // import Card from "../components/Card"
 // import OtherPlayerInfoBlock from "../components/OtherPlayerInfoBlock"
 import Velocity from 'velocity-animate';
 
 export default {
     name: "GameTable",
-    // components: {Card},
+    components: { 
+        RoomInfo, MyBasicInfo, RemainCards, 
+        JudgerCard, FateCard 
+    },
 
     // table page data structs
     data(){
@@ -116,6 +147,7 @@ export default {
                 jackpot: 0,
                 status: "",
                 currentRound: 0,
+                roundNumLimit: 0,
                 currentPlayerIndex: -1,
                 judgerCard: null,
                 fateCard: null,
@@ -240,7 +272,8 @@ export default {
 
         RestoreGameData(result){
             const {
-                jackpot, status, currentRound, currentPlayerIndex,
+                jackpot, status, currentRound, roundNumLimit,
+                currentPlayerIndex,
                 judgerCard, fateCard, fightersInfo,
                 tableCards,
                 preUseCardFee, preUseCardPlayerIndex,
@@ -251,6 +284,7 @@ export default {
             this.gameData.jackpot = jackpot;
             this.gameData.status = status;
             this.gameData.currentRound = currentRound;
+            this.gameData.roundNumLimit = roundNumLimit;
             this.gameData.currentPlayerIndex = currentPlayerIndex;
             this.gameData.judgerCard = judgerCard;
             this.gameData.fateCard = fateCard;
@@ -266,7 +300,8 @@ export default {
 
         SetInitGameData(result){
             const {
-                jackpot, status, currentRound, currentPlayerIndex,
+                jackpot, status, currentRound, roundNumLimit,
+                currentPlayerIndex,
                 judgerCard, fateCard, fightersInfo,
                 tableCards,
                 preUseCardFee, preUseCardPlayerIndex,
@@ -277,6 +312,7 @@ export default {
             this.gameData.jackpot = jackpot;
             this.gameData.status = status;
             this.gameData.currentRound = currentRound;
+            this.gameData.roundNumLimit = roundNumLimit;
             this.gameData.currentPlayerIndex = currentPlayerIndex;
             this.gameData.judgerCard = judgerCard;
             this.gameData.fateCard = fateCard;
@@ -380,7 +416,7 @@ export default {
         OnEndUseCard(result){
             // status currentPlayerIndex
             const {status, currentPlayerIndex} =result;
-            if (currentPlayerIndex == memberIndex) {
+            if (currentPlayerIndex == this.gameData.memberIndex) {
                 this.gameData.myInfos.status = status;
             } else {
                 let pIndex = this.gameData.otherPlayerList.findIndex(obj=>obj.memberIndex == currentPlayerIndex);
@@ -412,7 +448,7 @@ export default {
 
         GetWinnerFighter(result){
             // winnerFighterIndex
-            this.gameData.winnerFighterIndex = winnerFighterIndex;
+            this.gameData.winnerFighterIndex = result.winnerFighterIndex;
         },
 
         OnGameEnd(result){
@@ -438,16 +474,28 @@ export default {
         height: 100%;
     }
 
+    .top_area{
+        width: 100%;
+        height: 20%;
+    }
+
+    .room_info_area{
+        width: 40%;
+        height: 100%;
+        background-color: rgb(251, 84, 84);
+        float: right;
+    }
+
     .other_player_area{
         width: 60%;
-        height: 20%;
-        min-height: 170px;
+        height: 100%;
         display: flex;
         padding: 10px;
         justify-content: center;
         box-sizing: border-box;
         flex-wrap: wrap;
         background-color: #00f;
+        float: left;
     }
 
     .my_area{

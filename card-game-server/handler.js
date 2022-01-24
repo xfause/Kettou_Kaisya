@@ -283,7 +283,8 @@ function SendInitDataToAll(roomNumber) {
             }
         });
         u.socket.emit("INIT_DATA", {
-            seed, rand, jackpot, status, currentRound, currentPlayerIndex,
+            seed, rand, jackpot, status, currentRound, roundNumLimit,
+            currentPlayerIndex,
             judgerCard, fightersInfo,
             tableCards,
             preUseCardFee, preUseCardPlayerIndex,
@@ -318,7 +319,8 @@ function RestoreGameData(roomNumber, userId) {
     });
     
     player.socket.emit("RESTORE_DATA", {
-        seed, rand, jackpot, status, currentRound, currentPlayerIndex,
+        seed, rand, jackpot, status, currentRound, roundNumLimit,
+        currentPlayerIndex,
         judgerCard, fateCard, fightersInfo,
         tableCards,
         preUseCardFee, preUseCardPlayerIndex,
