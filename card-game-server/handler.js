@@ -155,13 +155,15 @@ function Connect(args, socket, socketServer) {
                 existUserGameRoomMap[p.userId] = roomNumber;
                 p.socket.join(roomNumber);
                 p.memberIndex = i;
+                p.status = "NOT_BETED";
                 usersList.push(p);
             }
 
             existUserGameRoomMap[userId] = roomNumber;
             socket.join(roomNumber);
             usersList.push({
-                userId, socket, roomNumber, memberIndex: roomPlayerLimit
+                userId, socket, roomNumber, memberIndex: roomPlayerLimit,
+                status : "NOT_BETED",
             });
 
             memoryData[roomNumber]["usersList"] = usersList;
@@ -169,7 +171,7 @@ function Connect(args, socket, socketServer) {
             memoryData[roomNumber]["usersList"].map(p => {
                 p.socket.emit("START", {
                     roomNumber,
-                    memberIndex: p.memberIndex
+                    memberIndex: p.memberIndex,
                 });
             })
             
@@ -275,7 +277,8 @@ function SendInitDataToAll(roomNumber) {
                 otherPlayerList.push({
                     money: p.money,
                     memberIndex: p.memberIndex,
-                    handCardsNum: p.handCards.length
+                    handCardsNum: p.handCards.length,
+                    status: p.status
                 })
             }
         });
@@ -308,7 +311,9 @@ function RestoreGameData(roomNumber, userId) {
     usersList.map(p => p.userId !== u.userId).map(o => {
         otherPlayerList.push({
             money: o.money,
-            handCardsNum: o.handCards.length
+            handCardsNum: o.handCards.length,
+            memberIndex: o.memberIndex,
+            status: o.status
         })
     });
     
@@ -505,6 +510,7 @@ function OnUseCard(args, socket) {
             p.socket.emit("OTHER_USE_CARD", {
                 useCardPlayerIndex: memberIndex,
                 useCardPlayerHandCardsNumber: memoryData[roomNumber][usersList][currUserIndex].handCards.length,
+                useCardPlayerStatus: memoryData[roomNumber][usersList][currUserIndex].status,
                 jackpot: memoryData[roomNumber].jackpot,
                 preUseCardFee: memoryData[roomNumber].preUseCardFee,
                 tableCards: memoryData[roomNumber].tableCards,
@@ -555,7 +561,9 @@ function JudgeTableCards(roomNumber) {
             usersList.map(p => p.userId !== u.userId).map(o => {
                 otherPlayerList.push({
                     money: o.money,
-                    handCardsNum: o.handCards.length
+                    handCardsNum: o.handCards.length,
+                    memberIndex: o.memberIndex,
+                    status: o.status
                 })
             })
 

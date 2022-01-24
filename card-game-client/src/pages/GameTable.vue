@@ -104,9 +104,14 @@ export default {
             // for drag and use card index
             currentCardIndex: -1,
 
+            // show rank list
+            showRankList: false,
+
             gameData: {
                 memberIndex: -1,
                 roomNumber: -1,
+
+                rankList: [],
 
                 jackpot: 0,
                 status: "",
@@ -114,9 +119,12 @@ export default {
                 currentPlayerIndex: -1,
                 judgerCard: null,
                 fateCard: null,
+
+                winnerFighterIndex: -1,
                 fightersInfo: [],
+
                 tableCards: [],
-                preUseCardFee: 0,
+                preUseCardFee: -1,
                 preUseCardPlayerIndex: -1,
                 handCards: [],
                 remainCardsNum: -1,
@@ -334,45 +342,83 @@ export default {
         },
 
         OnPlayerFoldCard(result){
-            // todo
             // preFoldPlayerIndex,currentPlayerIndex
+            const {preFoldPlayerIndex, currentPlayerIndex} = result;
+            let pIndex = this.gameData.otherPlayerList.findIndex(obj=>obj.memberIndex == preFoldPlayerIndex);
+            this.gameData.otherPlayerList[pIndex].status = "FOLDED";
+            this.gameData.currentPlayerIndex = currentPlayerIndex;
         },
 
         OnMyUseCard(result){
-            // todo
             // tableCards, handCards, jackpot, status
+            const {tableCards, handCards, jackpot, status} = result;
+            this.gameData.tableCards = tableCards;
+            if (!this.gameData.myInfos) {
+                this.gameData.myInfos = {status};
+            } else {
+                this.gameData.myInfos.status = status;
+            }
+            this.gameData.handCards = handCards;
+            this.gameData.jackpot = jackpot;
         },
 
         OnOtherUseCard(result){
-            // todo
             // useCardPlayerIndex,useCardPlayerHandCardsNumber,
             // jackpot,preUseCardFee,tableCards
+            const {
+                useCardPlayerIndex,useCardPlayerHandCardsNumber,useCardPlayerStatus,
+                jackpot,preUseCardFee,tableCards
+            } = result;
+                this.gameData.jackpot = jackpot;
+                this.gameData.preUseCardFee = preUseCardFee;
+                this.gameData.tableCards = tableCards;
+                let pIndex = this.gameData.otherPlayerList.findIndex(obj=>obj.memberIndex == useCardPlayerIndex);
+                this.gameData.otherPlayerList[pIndex].status = useCardPlayerStatus;
+                this.gameData.otherPlayerList[pIndex].handCardsNum = useCardPlayerHandCardsNumber;
         },
 
         OnEndUseCard(result){
-            // todo
             // status currentPlayerIndex
+            const {status, currentPlayerIndex} =result;
+            if (currentPlayerIndex == memberIndex) {
+                this.gameData.myInfos.status = status;
+            } else {
+                let pIndex = this.gameData.otherPlayerList.findIndex(obj=>obj.memberIndex == currentPlayerIndex);
+                this.gameData.otherPlayerList[pIndex].status = status;
+            }
         },
 
         OnJudgeStageActiveCard(result){
-            // todo
-            // jackpot, status,
-            // currentRound, currentPlayerIndex,
-            // judgerCard, fateCard, fightersInfo,
-            // tableCards,
-            // preUseCardFee, preUseCardPlayerIndex,
-            // handCards, remainCardsNum,
-            // otherPlayerList
+            const {
+                jackpot, status,
+                currentRound,
+                judgerCard, fateCard, fightersInfo,
+                tableCards,
+                // preUseCardFee, preUseCardPlayerIndex, currentPlayerIndex,
+                handCards, remainCardsNum,
+                otherPlayerList
+            } = result;
+            this.gameData.jackpot = jackpot;
+            this.gameData.status = status;
+            this.gameData.currentRound = currentRound;
+            this.gameData.judgerCard = judgerCard;
+            this.gameData.fateCard = fateCard;
+            this.gameData.fightersInfo = fightersInfo;
+            this.gameData.tableCards = tableCards;
+            this.gameData.handCards = handCards;
+            this.gameData.remainCardsNum = remainCardsNum;
+            this.gameData.otherPlayerList = otherPlayerList;
         },
 
         GetWinnerFighter(result){
-            // todo
             // winnerFighterIndex
+            this.gameData.winnerFighterIndex = winnerFighterIndex;
         },
 
         OnGameEnd(result){
-            // todo
             // rankList
+            this.showRankList = true;
+            this.gameData.rankList = result.rankList;
         }
     }
 }
