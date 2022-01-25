@@ -1,6 +1,17 @@
 <template>
     <div class="judger_card">
-        <div>judger info</div>
+        <div 
+            v-if="this.judgerCard!==null"
+        >
+            <div>裁判卡</div>
+            <div>id:{{id}}</div>
+            <div>name:{{name}}</div>
+            <div>描述:{{desc}}</div>
+        </div>
+        <div v-if="this.judgerCard==null">
+            <div>裁判卡</div>
+            <div>空</div>
+        </div>
     </div>
 </template>
 
@@ -11,10 +22,31 @@ export default {
         judgerCard: Object, // judger infos
     },
     data(){
-        return {}
+        return {
+        }
     },
     computed: {
-        
+        id() {
+            if (this.judgerCard) {
+                return this.judgerCard.id;
+            } else {
+                return "N/A"
+            }
+        },
+        name() {
+            if (this.judgerCard) {
+                return this.judgerCard.name;
+            } else {
+                return "N/A"
+            }
+        },
+        desc() {
+            if (this.judgerCard) {
+                return this.judgerCard.desc;
+            } else {
+                return "N/A"
+            }
+        },
     }
 }
 </script>

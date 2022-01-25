@@ -10,13 +10,15 @@
                     @before-enter="beforeEnter"
                     @after-enter="afterEnter"
                 >
-                    <!-- <OtherPlayerInfoBlock 
+                    <OtherPlayerInfo
                         :key="p.memberIndex"
                         :index="index"
-                        :data="p"
+                        :money="p.money"
+                        :memberIndex="p.memberIndex"
+                        :handCardsNum="p.handCardsNum"
+                        :status="p.status"
                         v-for="(p, index) in gameData.otherPlayerList"
-                    /> -->
-                    other player info cards
+                    />
                 </transition-group >
 
                 <div class="room_info_area">
@@ -31,7 +33,7 @@
 
             <div class="table_area">
                 <div class ="fate_judger_area">
-                    <JudgerCard 
+                    <JudgerCard
                         :judgerCard="gameData.judgerCard"
                     />
 
@@ -40,9 +42,24 @@
                     />
                 </div>
 
-                <div class ="fighters_area">
-                    fighters list
-                </div>
+                <transition-group 
+                    class="fighters_area"
+                    tag="div"
+                    :css="false"
+                    @enter="enter"
+                    @before-enter="beforeEnter"
+                    @after-enter="afterEnter"
+                >
+                    <FighterCard
+                        :key="f.id"
+                        :index="f.id"
+                        :status="gameData.myInfos.status"
+                        :money="gameData.myInfos.money"
+                        :betInfos="gameData.betInfos"
+                        :fighter="f"
+                        v-for="(f) in gameData.fightersInfo"
+                    />
+                </transition-group >
 
                 <div class ="table_cards_area">
                     table card list
@@ -52,6 +69,7 @@
             <div class="my_area">
                 <div class="my_basic_info">
                     <MyBasicInfo 
+                        v-if="gameData.myInfos"
                         :memberIndex="gameData.myInfos.memberIndex"
                         :status="gameData.myInfos.status"
                         :money="gameData.myInfos.money"
@@ -106,9 +124,11 @@
 import * as io from "socket.io-client";
 import RoomInfo from "../components/RoomInfo";
 import MyBasicInfo from "../components/MyBasicInfo";
+import OtherPlayerInfo from "../components/OtherPlayerInfo";
 import RemainCards from "../components/RemainCards";
 import JudgerCard from "../components/JudgerCard";
 import FateCard from "../components/FateCard";
+import FighterCard from "../components/FighterCard";
 // import Card from "../components/Card"
 // import OtherPlayerInfoBlock from "../components/OtherPlayerInfoBlock"
 import Velocity from 'velocity-animate';
@@ -116,8 +136,9 @@ import Velocity from 'velocity-animate';
 export default {
     name: "GameTable",
     components: { 
-        RoomInfo, MyBasicInfo, RemainCards, 
-        JudgerCard, FateCard 
+        RoomInfo, MyBasicInfo, OtherPlayerInfo,
+        RemainCards, 
+        JudgerCard, FateCard, FighterCard
     },
 
     // table page data structs
@@ -153,6 +174,8 @@ export default {
                 fateCard: null,
 
                 winnerFighterIndex: -1,
+                // 玩家下注给几号fighter 下注了多少钱
+                betInfos: [],
                 fightersInfo: [],
 
                 tableCards: [],
@@ -288,7 +311,9 @@ export default {
             this.gameData.currentPlayerIndex = currentPlayerIndex;
             this.gameData.judgerCard = judgerCard;
             this.gameData.fateCard = fateCard;
-            this.gameData.fightersInfo = fightersInfo;
+            this.gameData.fightersInfo = fightersInfo.sort(function(a, b) {
+                return parseFloat(a.id) - parseFloat(b.id);
+            });
             this.gameData.tableCards = tableCards;
             this.gameData.preUseCardFee = preUseCardFee;
             this.gameData.preUseCardPlayerIndex = preUseCardPlayerIndex;
@@ -316,7 +341,9 @@ export default {
             this.gameData.currentPlayerIndex = currentPlayerIndex;
             this.gameData.judgerCard = judgerCard;
             this.gameData.fateCard = fateCard;
-            this.gameData.fightersInfo = fightersInfo;
+            this.gameData.fightersInfo = fightersInfo.sort(function(a, b) {
+                return parseFloat(a.id) - parseFloat(b.id);
+            });
             this.gameData.tableCards = tableCards;
             this.gameData.preUseCardFee = preUseCardFee;
             this.gameData.preUseCardPlayerIndex = preUseCardPlayerIndex;
@@ -330,10 +357,29 @@ export default {
             // playerBetStatus:{
             //     status, memberIndex
             //     userId, money,
+            //     betInfos
             //     currentPlayerIndex
             // }
-            const {fightersInfo} = result;
-            this.gameData.fightersInfo = fightersInfo;
+            const {fightersInfo, playerBetStatus} = result;
+            this.gameData.fightersInfo = fightersInfo.sort(function(a, b) {
+                return parseFloat(a.id) - parseFloat(b.id);
+            });
+
+            playerBetStatus.map(p=>{
+                if (p.memberIndex == this.gameData.memberIndex) {
+                    // my bet
+                    this.gameData.myInfos.status = p.status;
+                    this.gameData.myInfos.money = p.money;
+                    this.gameData.currentPlayerIndex = p.currentPlayerIndex;
+                    this.gameData.betInfos = p.betInfos;
+                } else {
+                    // other player bet
+                    const pIndex = this.gameData.otherPlayerList.findIndex(obj=>obj.memberIndex == p.memberIndex);
+                    this.gameData.otherPlayerList[pIndex].money = p.money
+                    this.gameData.otherPlayerList[pIndex].status = p.status
+                    this.gameData.currentPlayerIndex = p.currentPlayerIndex;
+                }
+            })
         },
 
         OnChangeRoomStage(result){
@@ -439,7 +485,9 @@ export default {
             this.gameData.currentRound = currentRound;
             this.gameData.judgerCard = judgerCard;
             this.gameData.fateCard = fateCard;
-            this.gameData.fightersInfo = fightersInfo;
+            this.gameData.fightersInfo = fightersInfo.sort(function(a, b) {
+                return parseFloat(a.id) - parseFloat(b.id);
+            });
             this.gameData.tableCards = tableCards;
             this.gameData.handCards = handCards;
             this.gameData.remainCardsNum = remainCardsNum;
@@ -496,6 +544,7 @@ export default {
         flex-wrap: wrap;
         background-color: #00f;
         float: left;
+        column-gap: 10px;
     }
 
     .my_area{
@@ -553,7 +602,14 @@ export default {
         background-color: rgb(250, 58, 250);
         height: 100%;
         margin-left: 12.5%;
-        margin-right: 35%;
+        margin-right: 55%;
+        display: flex;
+        padding: 10px;
+        justify-content: center;
+        box-sizing: border-box;
+        flex-wrap: wrap;
+        column-gap: 10px;
+        row-gap: 10px;
     }
 
     .table_cards_area{

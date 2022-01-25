@@ -1,6 +1,17 @@
 <template>
     <div class="fate_card">
-        <div>fate card info</div>
+        <div 
+            v-if="this.fateCard!=null"
+        >
+            <div>命运卡</div>
+            <div>id:{{id}}</div>
+            <div>name:{{name}}</div>
+            <div>描述:{{desc}}</div>
+        </div>
+        <div v-if="this.fateCard==null">
+            <div>命运卡</div>
+            <div>空</div>
+        </div>
     </div>
 </template>
 
@@ -14,7 +25,27 @@ export default {
         return {}
     },
     computed: {
-        
+        id() {
+            if (this.fateCard) {
+                return this.fateCard.id;
+            } else {
+                return "N/A"
+            }
+        },
+        name() {
+            if (this.fateCard) {
+                return this.fateCard.name;
+            } else {
+                return "N/A"
+            }
+        },
+        desc() {
+            if (this.fateCard) {
+                return this.fateCard.desc;
+            } else {
+                return "N/A"
+            }
+        },
     }
 }
 </script>
