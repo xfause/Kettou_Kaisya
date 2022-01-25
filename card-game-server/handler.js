@@ -208,7 +208,7 @@ function InitGameData(roomNumber) {
     // add judger card
     let tmpJudgers = [...Judgers];
     var ranJudgerIndex = Math.floor(Math.random() * tmpJudgers.length);
-    gameData.judgerCard = tmpFighters.splice(ranJudgerIndex, 1)[0];
+    gameData.judgerCard = tmpJudgers.splice(ranJudgerIndex, 1)[0];
 
     // empty table cards
     gameData.tableCards = [];
@@ -336,23 +336,25 @@ function RestoreGameData(roomNumber, userId) {
 }
 
 function OnBetFighters(args, socket) {
-    let roomNumber = args.roomNumber, betList = args.betList, memberIndex = args.memberIndex;
+    // let roomNumber = args.roomNumber, fighterId = args.fighterId, memberIndex = args.memberIndex;
+    let { roomNumber, fighterId, memberIndex, betMoney } = args;
 
     // change memory data
     let currUserIndex = memoryData[roomNumber][usersList].findIndex((obj => obj.memberIndex == memberIndex));
-    memoryData[roomNumber][usersList][currUserIndex].betInfos = betList;
+    if (memoryData[roomNumber][usersList][currUserIndex].betInfos.length == 3) {
+        return;
+    }
+    memoryData[roomNumber][usersList][currUserIndex].betInfos.push({
+        fighterId, betMoney
+    });
     memoryData[roomNumber][usersList][currUserIndex].status = "BETED";
-    let usedMoney = 0;
-    betList.map(b => {
-        let id = b.fighterId, money = b.betMoney;
-        let fighterIndex = memoryData[roomNumber].fightersInfo.findIndex((obj => obj.id == id));
-        memoryData[roomNumber]["fightersInfo"][fighterIndex].betInfos.push({
-            memberIndex,
-            money
-        });
-        usedMoney += money;
-    })
-    memoryData[roomNumber][usersList][currUserIndex].money -= usedMoney;
+    let fighterIndex = memoryData[roomNumber].fightersInfo.findIndex((obj => obj.id == fighterId));
+    memoryData[roomNumber]["fightersInfo"][fighterIndex].betInfos.push({
+        memberIndex,
+        money
+    });
+    
+    memoryData[roomNumber][usersList][currUserIndex].money -= betMoney;
     memoryData[roomNumber].currentPlayerIndex = memoryData[roomNumber].currentPlayerIndex + 1 % roomPlayerLimit;
 
     // send change to user
@@ -365,6 +367,7 @@ function OnBetFighters(args, socket) {
                     memberIndex: o.memberIndex,
                     userId: o.userId,
                     money: o.money,
+                    betInfos: o.betInfos,
                     currentPlayerIndex: memoryData[roomNumber].currentPlayerIndex
                 }
             })
