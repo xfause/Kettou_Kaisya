@@ -58,4 +58,4 @@ export default {
     background-color: white;
     margin: 20px;
 }
-</style>>
+</style>

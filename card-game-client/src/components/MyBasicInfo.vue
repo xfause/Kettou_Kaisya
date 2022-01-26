@@ -3,16 +3,34 @@
         <div>memberIndex:{{memberIndex}}</div>
         <div>money:{{money}}</div>
         <div>Status:{{str_status}}</div>
+
+        <OperationPanel
+            :playerStatus="this.status"
+            :roomStatus="this.roomStatus"
+            :betInfos="this.betInfos"
+            :memberIndex="this.memberIndex"
+            :roomNumber="this.roomNumber"
+        />
     </div>
 </template>
 
 <script>
+import OperationPanel from "../components/OperationPanel";
+
 export default {
     name: "MyBasicInfo",
+    components: { 
+        OperationPanel
+    },
     props: {
         money: Number, // 剩余金钱数
         memberIndex: Number, // 用户序号
         status: String, // 用户状态
+
+        // for operation panel
+        roomStatus: String, // 房间状态
+        betInfos: Array,
+        roomNumber: String,
     },
     data(){
         return {}

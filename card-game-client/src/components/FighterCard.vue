@@ -10,14 +10,45 @@
             <div>magic:{{magic}}</div>
             <div>描述:{{desc}}</div>
             <div>赏金倍率:{{magnification}}</div>
-            <button 
-                v-if="!this.showMoneyInput"
-                @click="this.OnShowMoneyInput"
+            <div
+                v-if="(this.status == `NOT_BETED` 
+                    && this.roomStatus==`BET` 
+                    && !betedOnThisFighter)"
             >
-                下注
-            </button>
-            <div v-if="this.showMoneyInput">
-                输入框
+                <el-button
+                    v-if="!this.showMoneyInput"
+                    @click="this.OnShowMoneyInput"
+                >
+                    下注
+                </el-button>
+                <div v-if="this.showMoneyInput">
+                    <!-- <el-input 
+                        type='number' 
+                        :max='this.money'
+                        :min='0'
+                        
+                    /> -->
+                    <el-input-number 
+                        :value="0"
+                        :max="this.money"
+                        :min="0"
+                        :step="1"
+                        :step-strictly="true"
+                        :controls="false"
+                        @change="this.OnNumberInputChange"
+                        class="bet_fighter_money_input"
+                    />
+                    <el-button
+                        @click="this.OnSendBetData"
+                    >
+                        确定
+                    </el-button>
+                    <el-button
+                        @click="this.OnHideMoneyInput"
+                    >
+                        取消
+                    </el-button>
+                </div>
             </div>
         </div>
         <div v-if="this.fighter==null">
@@ -29,17 +60,23 @@
 
 <script>
 import { EventBus } from '../eventBus';
+
 export default {
     name: "FighterCard",
     props: {
         fighter: Object, // fighter infos
-        status: String,
+        status: String, // player status
+        roomStatus: String, // room status
         money: Number,
-        betInfos: Array
+        memberIndex: Number,
+        roomNumber: String,
+        betInfos: Array,
     },
     data(){
         return {
-            showMoneyInput: false
+            showMoneyInput: false,
+            maxBetMoney: this.money,
+            currentBetMoney: 0,
         }
     },
     created() {
@@ -50,6 +87,11 @@ export default {
             }
         });
     },
+    mounted(){
+        this.sockets.subscribe("ALREADY_BET_ONCE", () => {
+            this.showMoneyInput = false;
+        });
+    },
     methods:{
         OnShowMoneyInput(){
             EventBus.$emit("otherShowMoneyInput", {
@@ -57,8 +99,24 @@ export default {
             });
             this.showMoneyInput = true;
         },
-        OnSendBeyMoney(){
-            // todo
+        OnHideMoneyInput(){
+            this.showMoneyInput = false;
+            this.currentBetMoney = 0;
+        },
+        OnSendBetData(){
+            // console.log(this.id);
+            // console.log(this.currentBetMoney);
+            this.$socket.emit("COMMAND",{
+                type:"BET_ON_FIGHTERS",
+                roomNumber: this.roomNumber,
+                fighterId: this.id,
+                betMoney: this.currentBetMoney,
+                memberIndex: this.memberIndex
+            });
+            this.currentBetMoney = 0;
+        },
+        OnNumberInputChange(currentValue) {
+            this.currentBetMoney = currentValue
         }
     },
     computed: {
@@ -113,6 +171,18 @@ export default {
                 return "N/A"
             }
         },
+        betedOnThisFighter(){
+            let res = false;
+
+            if (this.betInfos) {
+                this.betInfos.map(b=>{
+                    if (b.fighterId == this.id) {
+                        res = true;
+                    }
+                });
+            }
+            return res;
+        }
     }
 }
 </script>
@@ -121,5 +191,8 @@ export default {
 .fighter_card{
     width: 25%;
     background-color: white;
+}
+.bet_fighter_money_input{
+    width: 100% !important;
 }
 </style>

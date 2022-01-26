@@ -54,6 +54,9 @@
                         :key="f.id"
                         :index="f.id"
                         :status="gameData.myInfos.status"
+                        :roomStatus="gameData.status"
+                        :memberIndex="gameData.memberIndex"
+                        :roomNumber="gameData.roomNumber"
                         :money="gameData.myInfos.money"
                         :betInfos="gameData.betInfos"
                         :fighter="f"
@@ -73,6 +76,10 @@
                         :memberIndex="gameData.myInfos.memberIndex"
                         :status="gameData.myInfos.status"
                         :money="gameData.myInfos.money"
+
+                        :roomStatus="gameData.status"
+                        :betInfos="gameData.betInfos"
+                        :roomNumber="gameData.roomNumber"
                     />
                 </div>
 
@@ -121,7 +128,7 @@
 </template>
 
 <script>
-import * as io from "socket.io-client";
+// import * as io from "socket.io-client";
 import RoomInfo from "../components/RoomInfo";
 import MyBasicInfo from "../components/MyBasicInfo";
 import OtherPlayerInfo from "../components/OtherPlayerInfo";
@@ -130,7 +137,6 @@ import JudgerCard from "../components/JudgerCard";
 import FateCard from "../components/FateCard";
 import FighterCard from "../components/FighterCard";
 // import Card from "../components/Card"
-// import OtherPlayerInfoBlock from "../components/OtherPlayerInfoBlock"
 import Velocity from 'velocity-animate';
 
 export default {
@@ -161,7 +167,7 @@ export default {
 
             gameData: {
                 memberIndex: -1,
-                roomNumber: -1,
+                roomNumber: "-1",
 
                 rankList: [],
 
@@ -190,85 +196,86 @@ export default {
     },
 
     mounted(){
-        this.socket = io.connect("http://localhost:4001");
+        // this.sockets = io.connect("http://localhost:4001");
+        this.$socket.open();
 
         // connect to room
-        this.socket.emit("COMMAND", {
+        this.$socket.emit("COMMAND", {
             type: "CONNECT",
             userId: this.userId
         });
 
         // wait in queue
-        this.socket.on("WAITE", () => {
+        this.sockets.subscribe("WAITE", () => {
             this.matchDialogShow = true;
         });
 
         // reconnect to game
-        this.socket.on("RECONNECT", (result) => {
+        this.sockets.subscribe("RECONNECT", (result) => {
             this.gameData.roomNumber = result.roomNumber;
             this.gameData.memberIndex = result.memberIndex;
         });
-        this.socket.on("RESTORE_DATA",(result)=>{
+        this.sockets.subscribe("RESTORE_DATA",(result)=>{
             this.RestoreGameData(result);
         });
 
         // game start initial data
-        this.socket.on("INIT_DATA", (result)=>{
+        this.sockets.subscribe("INIT_DATA", (result)=>{
             this.SetInitGameData(result);
         });
 
         // player bet on fighters change
-        this.socket.on("AFTER_BET_DATA",(result)=>{
+        this.sockets.subscribe("AFTER_BET_DATA",(result)=>{
             this.OnPlayerBetFighters(result);
         })
 
         // change room stage
-        this.socket.on("CHANGE_ROOM_STAGE", (result)=>{
+        this.sockets.subscribe("CHANGE_ROOM_STAGE", (result)=>{
             this.OnChangeRoomStage(result);
         });
 
         // my check card
-        this.socket.on("MY_CHECK_CARD", (result)=>{
+        this.sockets.subscribe("MY_CHECK_CARD", (result)=>{
             this.OnMyCheckCard(result);
         })
 
         // other check card
-        this.socket.on("OTHER_CHECK_CARD", (result)=>{
+        this.sockets.subscribe("OTHER_CHECK_CARD", (result)=>{
             this.OnOtherCheckCard(result)
         })
 
         // player fold card
-        this.socket.on("FOLD_CARD",(result)=>{
+        this.sockets.subscribe("FOLD_CARD",(result)=>{
             this.OnPlayerFoldCard(result);
         })
 
         // my use card
-        this.socket.on("MY_USE_CARD",(result)=>{
+        this.sockets.subscribe("MY_USE_CARD",(result)=>{
             this.OnMyUseCard(result);
         })
 
         // other use card
-        this.socket.on("OTHER_USE_CARD",(result)=>{
+        this.sockets.subscribe("OTHER_USE_CARD",(result)=>{
             this.OnOtherUseCard(result);
         })
 
         // player end use card
-        this.socket.on("END_USE_CARD",(result)=>{
+        this.sockets.subscribe("END_USE_CARD",(result)=>{
             this.OnEndUseCard(result);
         })
 
         // judge stage -> active card
-        this.socket.on("JUDGE_ACTIVE_CARD",(result)=>{
+        this.sockets.subscribe("JUDGE_ACTIVE_CARD",(result)=>{
             this.OnJudgeStageActiveCard(result);
         })
 
         // get winner fighter index
-        this.socket.on("WINNER_FIGHTER", (result)=>{
+        this.sockets.subscribe("WINNER_FIGHTER", (result)=>{
             this.GetWinnerFighter(result);
         })
 
         // after all rounds game end
-        this.socket.on("GAME_END", (result)=>{
+        this.sockets.subscribe("GAME_END", (result)=>{
             this.OnGameEnd(result);
         })
     },
@@ -320,12 +327,14 @@ export default {
             this.gameData.handCards = handCards;
             this.gameData.remainCardsNum = remainCardsNum;
             this.gameData.myInfos = myInfos;
+            this.gameData.memberIndex = myInfos.memberIndex;
             this.gameData.otherPlayerList = otherPlayerList;
         },
 
         SetInitGameData(result){
             const {
                 jackpot, status, currentRound, roundNumLimit,
+                roomNumber,
                 currentPlayerIndex,
                 judgerCard, fateCard, fightersInfo,
                 tableCards,
@@ -336,6 +345,7 @@ export default {
             } = result
             this.gameData.jackpot = jackpot;
             this.gameData.status = status;
+            this.gameData.roomNumber = roomNumber;
             this.gameData.currentRound = currentRound;
             this.gameData.roundNumLimit = roundNumLimit;
             this.gameData.currentPlayerIndex = currentPlayerIndex;
@@ -350,6 +360,7 @@ export default {
             this.gameData.handCards = handCards;
             this.gameData.remainCardsNum = remainCardsNum;
             this.gameData.myInfos = myInfos;
+            this.gameData.memberIndex = myInfos.memberIndex;
             this.gameData.otherPlayerList = otherPlayerList;
         },
 

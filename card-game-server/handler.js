@@ -101,6 +101,9 @@ module.exports = function handleSynchronousClient(args, socket, socketServer) {
         case "BET_ON_FIGHTERS":
             OnBetFighters(args, socket);
             break;
+        case "END_BET_FIGHTERS":
+            OnEndBetFighters(args, socket);
+            break;
         case "CHECK_CARD":
             OnCheckCard(args, socket);
             break;
@@ -181,8 +184,12 @@ function Connect(args, socket, socketServer) {
 }
 
 function InitGameData(roomNumber) {
-    let random = memoryData[roomNumber].rand() * roomPlayerLimit % roomPlayerLimit;
+    // let random = memoryData[roomNumber].rand() * (roomPlayerLimit - 1) % (roomPlayerLimit - 1);
+    let random = memoryData[roomNumber].rand() * (roomPlayerLimit - 1);
+    random = Math.round(random);
     let gameData = {};
+    gameData.seed = memoryData[roomNumber].seed,
+    gameData.rand = memoryData[roomNumber].rand,
     gameData.currentPlayerIndex = random;
     gameData.startPlayerIndex = random;
     gameData.currentRound = 1;
@@ -244,9 +251,11 @@ function GetNextCard(remainCards) {
 }
 
 function GetFateCard(roomNumber) {
-    let fateIndex = memoryData[roomNumber].rand() * FateCards.length % FateCards.length;
+    // let fateIndex = Math.round(memoryData[roomNumber].rand() * (FateCards.length - 1)) % (FateCards.length - 1);
+    let fateIndex = Math.round(memoryData[roomNumber].rand() * (FateCards.length - 1));
+
     memoryData[roomNumber].fateCard = FateCards[fateIndex];
-    return FateCards[fateIndex];
+    return memoryData[roomNumber].fateCard;
 }
 
 function GetNextPlayerIndex(currIndex, usersList, roomPlayerLimit) {
@@ -284,6 +293,7 @@ function SendInitDataToAll(roomNumber) {
         });
         u.socket.emit("INIT_DATA", {
             seed, rand, jackpot, status, currentRound, roundNumLimit,
+            roomNumber,
             currentPlayerIndex,
             judgerCard, fightersInfo,
             tableCards,
@@ -335,33 +345,17 @@ function RestoreGameData(roomNumber, userId) {
     });
 }
 
-function OnBetFighters(args, socket) {
-    // let roomNumber = args.roomNumber, fighterId = args.fighterId, memberIndex = args.memberIndex;
-    let { roomNumber, fighterId, memberIndex, betMoney } = args;
-
-    // change memory data
-    let currUserIndex = memoryData[roomNumber][usersList].findIndex((obj => obj.memberIndex == memberIndex));
-    if (memoryData[roomNumber][usersList][currUserIndex].betInfos.length == 3) {
-        return;
-    }
-    memoryData[roomNumber][usersList][currUserIndex].betInfos.push({
-        fighterId, betMoney
-    });
-    memoryData[roomNumber][usersList][currUserIndex].status = "BETED";
-    let fighterIndex = memoryData[roomNumber].fightersInfo.findIndex((obj => obj.id == fighterId));
-    memoryData[roomNumber]["fightersInfo"][fighterIndex].betInfos.push({
-        memberIndex,
-        money
-    });
-    
-    memoryData[roomNumber][usersList][currUserIndex].money -= betMoney;
+function OnEndBetFighters(args, socket) {
+    let { roomNumber, memberIndex } = args;
+    let currUserIndex = memoryData[roomNumber]["usersList"].findIndex((obj => obj.memberIndex == memberIndex));
+    memoryData[roomNumber]["usersList"][currUserIndex].status = "BETED";
     memoryData[roomNumber].currentPlayerIndex = memoryData[roomNumber].currentPlayerIndex + 1 % roomPlayerLimit;
 
     // send change to user
-    memoryData[roomNumber][usersList].map(p => {
+    memoryData[roomNumber]["usersList"].map(p => {
         p.socket.emit("AFTER_BET_DATA", {
             fightersInfo: memoryData[roomNumber]["fightersInfo"],
-            playerBetStatus: memoryData[roomNumber][usersList].map(o => {
+            playerBetStatus: memoryData[roomNumber]["usersList"].map(o => {
                 return {
                     status: o.status,
                     memberIndex: o.memberIndex,
@@ -376,7 +370,7 @@ function OnBetFighters(args, socket) {
 
     // if all beted , get fate card and go to "CARD" stage
     let betFlag = 0;
-    memoryData[roomNumber][usersList].map(o => {
+    memoryData[roomNumber]["usersList"].map(o => {
         if (o.status === "BETED") {
             betFlag += 1;
         }
@@ -384,7 +378,72 @@ function OnBetFighters(args, socket) {
     if (betFlag == roomPlayerLimit) {
         memoryData[roomNumber].fateCard = GetFateCard(roomNumber);
         memoryData[roomNumber].status = "CARD";
-        memoryData[roomNumber][usersList].map(p => {
+        memoryData[roomNumber]["usersList"].map(p => {
+            p.socket.emit("CHANGE_ROOM_STAGE", {
+                status: "CARD",
+                fateCard: memoryData[roomNumber].fateCard
+            })
+        })
+    }
+}
+
+function OnBetFighters(args, socket) {
+    // let roomNumber = args.roomNumber, fighterId = args.fighterId, memberIndex = args.memberIndex;
+    let { roomNumber, fighterId, memberIndex, betMoney } = args;
+
+    // change memory data
+    let currUserIndex = memoryData[roomNumber]["usersList"].findIndex((obj => obj.memberIndex == memberIndex));
+    if (memoryData[roomNumber]["usersList"][currUserIndex].betInfos.length == 3) {
+        return;
+    }
+    memoryData[roomNumber]["usersList"][currUserIndex].betInfos.push({
+        fighterId, betMoney
+    });
+    if (memoryData[roomNumber]["usersList"][currUserIndex].betInfos.length == 3) {
+        memoryData[roomNumber]["usersList"][currUserIndex].status = "BETED";
+    }
+    let fighterIndex = memoryData[roomNumber].fightersInfo.findIndex((obj => obj.id == fighterId));
+    memoryData[roomNumber]["fightersInfo"][fighterIndex].betInfos.push({
+        memberIndex,
+        money:betMoney
+    });
+    
+    memoryData[roomNumber]["usersList"][currUserIndex].money -= betMoney;
+    memoryData[roomNumber].currentPlayerIndex = memoryData[roomNumber].currentPlayerIndex + 1 % roomPlayerLimit;
+
+    // send change to user
+    memoryData[roomNumber]["usersList"].map(p => {
+        p.socket.emit("AFTER_BET_DATA", {
+            fightersInfo: memoryData[roomNumber]["fightersInfo"],
+            playerBetStatus: memoryData[roomNumber]["usersList"].map(o => {
+                return {
+                    status: o.status,
+                    memberIndex: o.memberIndex,
+                    userId: o.userId,
+                    money: o.money,
+                    betInfos: o.betInfos,
+                    currentPlayerIndex: memoryData[roomNumber].currentPlayerIndex
+                }
+            })
+        })
+        if (p.memberIndex == memberIndex) {
+            p.socket.emit("ALREADY_BET_ONCE", {
+
+            });
+        }
+    })
+
+    // if all beted , get fate card and go to "CARD" stage
+    let betFlag = 0;
+    memoryData[roomNumber]["usersList"].map(o => {
+        if (o.status === "BETED") {
+            betFlag += 1;
+        }
+    })
+    if (betFlag == roomPlayerLimit) {
+        memoryData[roomNumber].fateCard = GetFateCard(roomNumber);
+        memoryData[roomNumber].status = "CARD";
+        memoryData[roomNumber]["usersList"].map(p => {
             p.socket.emit("CHANGE_ROOM_STAGE", {
                 status: "CARD",
                 fateCard: memoryData[roomNumber].fateCard
