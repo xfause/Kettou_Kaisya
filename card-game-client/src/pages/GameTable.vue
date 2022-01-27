@@ -59,6 +59,7 @@
                         :roomNumber="gameData.roomNumber"
                         :money="gameData.myInfos.money"
                         :betInfos="gameData.betInfos"
+                        :fighterBetInfos="GetFighterBetInfos(f.id)"
                         :fighter="f"
                         v-for="(f) in gameData.fightersInfo"
                     />
@@ -80,6 +81,8 @@
                         :roomStatus="gameData.status"
                         :betInfos="gameData.betInfos"
                         :roomNumber="gameData.roomNumber"
+                        :currentPlayerIndex="gameData.currentPlayerIndex"
+                        :checkCardFee="gameData.checkCardFee"
                     />
                 </div>
 
@@ -168,6 +171,7 @@ export default {
             gameData: {
                 memberIndex: -1,
                 roomNumber: "-1",
+                checkCardFee: -1,
 
                 rankList: [],
 
@@ -264,6 +268,11 @@ export default {
             this.OnEndUseCard(result);
         })
 
+        // judge stage -> init fighters
+        this.sockets.subscribe("JUDGE_INIT_FIGHTERS",(result)=>{
+            this.OnJudgeStageInitFighters(result);
+        })
+
         // judge stage -> active card
         this.sockets.subscribe("JUDGE_ACTIVE_CARD",(result)=>{
             this.OnJudgeStageActiveCard(result);
@@ -302,7 +311,7 @@ export default {
 
         RestoreGameData(result){
             const {
-                jackpot, status, currentRound, roundNumLimit,
+                jackpot, status, currentRound, roundNumLimit, checkCardFee,
                 currentPlayerIndex,
                 judgerCard, fateCard, fightersInfo,
                 tableCards,
@@ -315,6 +324,7 @@ export default {
             this.gameData.status = status;
             this.gameData.currentRound = currentRound;
             this.gameData.roundNumLimit = roundNumLimit;
+            this.gameData.checkCardFee = checkCardFee;
             this.gameData.currentPlayerIndex = currentPlayerIndex;
             this.gameData.judgerCard = judgerCard;
             this.gameData.fateCard = fateCard;
@@ -333,7 +343,7 @@ export default {
 
         SetInitGameData(result){
             const {
-                jackpot, status, currentRound, roundNumLimit,
+                jackpot, status, currentRound, roundNumLimit, checkCardFee,
                 roomNumber,
                 currentPlayerIndex,
                 judgerCard, fateCard, fightersInfo,
@@ -348,6 +358,7 @@ export default {
             this.gameData.roomNumber = roomNumber;
             this.gameData.currentRound = currentRound;
             this.gameData.roundNumLimit = roundNumLimit;
+            this.gameData.checkCardFee = checkCardFee;
             this.gameData.currentPlayerIndex = currentPlayerIndex;
             this.gameData.judgerCard = judgerCard;
             this.gameData.fateCard = fateCard;
@@ -400,8 +411,11 @@ export default {
                 const {fateCard} = result;
                 this.gameData.fateCard = fateCard;
             } 
-            // else if (status == "JUDGE") {
-            // } else if (status == "CALC") {
+            else if (status == "JUDGE") {
+                const {playerStatus} = result;
+                this.gameData.myInfos.status = playerStatus;
+            } 
+            // else if (status == "CALC") {
             // }
         },
 
@@ -436,10 +450,11 @@ export default {
 
         OnPlayerFoldCard(result){
             // preFoldPlayerIndex,currentPlayerIndex
-            const {preFoldPlayerIndex, currentPlayerIndex} = result;
+            const {preFoldPlayerIndex, currentPlayerIndex, playerStatus} = result;
             let pIndex = this.gameData.otherPlayerList.findIndex(obj=>obj.memberIndex == preFoldPlayerIndex);
             this.gameData.otherPlayerList[pIndex].status = "FOLDED";
             this.gameData.currentPlayerIndex = currentPlayerIndex;
+            this.gameData.myInfos.status = playerStatus;
         },
 
         OnMyUseCard(result){
@@ -481,6 +496,13 @@ export default {
             }
         },
 
+        OnJudgeStageInitFighters(result){
+            const {fightersInfo} = result;
+            this.gameData.fightersInfo = fightersInfo.sort(function(a, b) {
+                return parseFloat(a.id) - parseFloat(b.id);
+            });
+        },
+
         OnJudgeStageActiveCard(result){
             const {
                 jackpot, status,
@@ -514,6 +536,16 @@ export default {
             // rankList
             this.showRankList = true;
             this.gameData.rankList = result.rankList;
+        },
+
+        GetFighterBetInfos(id){
+          let res = [];
+          this.gameData.fightersInfo.map(p=>{
+            if (p.id == id) {
+              res = p.betInfos;
+            }
+          })
+          return res;
         }
     }
 }

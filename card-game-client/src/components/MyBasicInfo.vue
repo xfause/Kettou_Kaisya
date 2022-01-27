@@ -9,7 +9,10 @@
             :roomStatus="this.roomStatus"
             :betInfos="this.betInfos"
             :memberIndex="this.memberIndex"
+            :currentPlayerIndex="this.currentPlayerIndex"
             :roomNumber="this.roomNumber"
+            :checkCardFee="this.checkCardFee"
+            :money="this.money"
         />
     </div>
 </template>
@@ -31,6 +34,8 @@ export default {
         roomStatus: String, // 房间状态
         betInfos: Array,
         roomNumber: String,
+        currentPlayerIndex: Number,
+        checkCardFee: Number
     },
     data(){
         return {}
