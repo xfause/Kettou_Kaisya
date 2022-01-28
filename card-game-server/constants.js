@@ -26,7 +26,7 @@ const CardType = {
     CHARACTER: 2, // 人物牌
 };
 
-const CardList = [
+const OldCardList = [
     {
         id: 1,
         name: "励志的演说家",
@@ -91,6 +91,61 @@ const AttackAnimationType = {
 
 
 // new
+
+// todo
+const CardList = [
+  {
+    id: 1,
+    name: "card 1",
+    type: "HIT",
+    desc: "desc 1",
+    needTarget: true,
+    targetType: "table",
+    OnCardStage: function(){
+      
+    },
+    OnJudgeStage: function(){
+      
+    }
+  }, {
+    id: 2,
+    name: "card 2",
+    type: "EFFECT",
+    desc: "desc 2",
+    needTarget: false,
+    OnCardStage: function(){
+      
+    },
+    OnJudgeStage: function(){
+      
+    }
+  }, {
+    id: 3,
+    name: "card 3",
+    type: "HIT",
+    desc: "desc 3",
+    needTarget: true,
+    targetType: "fighter",
+    OnCardStage: function(){
+      
+    },
+    OnJudgeStage: function(){
+      
+    }
+  }, {
+    id: 4,
+    name: "card 4",
+    type: "EFFECT",
+    desc: "desc 4",
+    needTarget: false,
+    OnCardStage: function(){
+      
+    },
+    OnJudgeStage: function(){
+      
+    }
+  }
+]
 
 const JudgerList = [
     {
