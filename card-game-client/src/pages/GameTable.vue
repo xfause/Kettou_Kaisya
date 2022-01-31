@@ -159,10 +159,7 @@ export default {
 
       // for use card
       // temp variable
-      currentChosenHandCardIndex: -1,
-
-      // for drag and use card index
-      currentCardIndex: -1,
+      currentChosenHandCardId: -1,
 
       // show rank list
       showRankList: false,
@@ -337,13 +334,14 @@ export default {
       el.style.transform = "";
     },
 
-    OnChooseHandCard(index) {
-      this.currentChosenHandCardIndex = index;
+    OnChooseHandCard(id) {
+      this.currentChosenHandCardId = id;
     },
 
-    OnClientUseCardStart({ startX, startY }) {
+    OnClientUseCardStart({ startX, startY,  targetType }) {
       this.showCanvas = true;
-      window.isUseCardDrag = true;
+      window.targetDrag = true;
+      window.targetType = targetType;
       this.useCardStartX = startX;
       this.useCardStartY = startY;
     },
@@ -354,11 +352,11 @@ export default {
         .getContext("2d");
 
       window.onmousemove = (e) => {
-        if (window.isCardDrag) {
+        if (window.noTargetDrag) {
           window.cardMoveX = e.pageX;
           window.cardMoveY = e.pageY;
         }
-        if (window.isUseCardDrag) {
+        if (window.targetDrag) {
           window.requestAnimationFrame(() => {
             // 绘制攻击箭头开始
             this.canvasContext.clearRect(
@@ -406,8 +404,9 @@ export default {
       };
 
       window.onmouseup = (e) => {
-        if (window.isCardDrag && this.currentChosenHandCardIndex !== -1) {
-          window.isCardDrag = false;
+        if (window.noTargetDrag && this.currentChosenHandCardId !== -1) {
+          window.noTargetDrag = false;
+          this.showCanvas = false;
           let top = this.tableAreaDom.offsetTop,
             width = this.tableAreaDom.offsetWidth,
             left = this.tableAreaDom.offsetLeft,
@@ -418,13 +417,17 @@ export default {
             y = e.pageY;
 
           if (x > left && x < left + width && y > top && y < top + height) {
-            console.log("use card success");
-            // display current card
+            console.log("use no target card success", this.currentChosenHandCardId);
+            console.log("card id:", this.currentChosenHandCardId);
+            // todo
           }
+
+          window.cardMoveX = window.cardInitX;
+          window.cardMoveY = window.cardInitY;
         }
 
-        if (window.isUseCardDrag) {
-          window.isUseCardDrag = false;
+        if (window.targetDrag && this.currentChosenHandCardId !== -1) {
+          window.targetDrag = false;
           this.showCanvas = false;
           this.canvasContext.clearRect(
             0,
@@ -437,25 +440,37 @@ export default {
           // get current card need target
           // check target type dom
           // check if have target index
-          
-          // let x = e.pageX, // 鼠标松开的x
-          //   y = e.pageY, // 鼠标松开的y
-          //   k = -1; // 用于记录找到的卡牌的index
 
-          // this.otherCardAreaDom.childNodes.forEach((cd) => {
-          //   // 循环遍历对手的卡牌dom
-          //   let top = cd.offsetTop,
-          //     width = cd.offsetWidth,
-          //     left = cd.offsetLeft,
-          //     height = cd.offsetHeight;
+          let x = e.pageX, // 鼠标松开的x
+            y = e.pageY, // 鼠标松开的y
+            k = -1; // 用于记录找到的卡牌的index
 
-          //   if (x > left && x < left + width && y > top && y < top + height) {
-          //     // 边缘检测
-          //     k = cd.dataset.k;
+            let targetAreaDom;
+            if (window.targetType == "table") {
+              targetAreaDom = this.tableAreaDom; 
+            }
+            if (window.targetType == "fighter") {
+              targetAreaDom = this.fighterAreaDom;
+            }
+            if (window.targetType == "player") {
+              targetAreaDom = this.otherPlayerAreaDom;
+            }
 
-          //     this.attackCard(k);
-          //   }
-          // });
+            targetAreaDom.childNodes.foreach((cd)=>{
+                let top = cd.offsetTop,
+                width = cd.offsetWidth,
+                left = cd.offsetLeft,
+                height = cd.offsetHeight;
+
+                if (x > left && x < left + width && y > top && y < top + height) {
+                  // 边缘检测
+                  k = cd.dataset.k;
+                  console.log("use target card success");
+                  console.log("card id:" , this.currentChosenHandCardId);
+                  console.log("target id:" , k);
+                  // todo
+                }
+            })
         }
       };
     },
@@ -493,7 +508,9 @@ export default {
       this.gameData.tableCards = tableCards;
       this.gameData.preUseCardFee = preUseCardFee;
       this.gameData.preUseCardPlayerIndex = preUseCardPlayerIndex;
-      this.gameData.handCards = handCards;
+      this.gameData.handCards = handCards.sort(function (a, b) {
+        return parseFloat(a.id) - parseFloat(b.id);
+      });
       this.gameData.remainCardsNum = remainCardsNum;
       this.gameData.myInfos = myInfos;
       this.gameData.memberIndex = myInfos.memberIndex;
@@ -535,7 +552,9 @@ export default {
       this.gameData.tableCards = tableCards;
       this.gameData.preUseCardFee = preUseCardFee;
       this.gameData.preUseCardPlayerIndex = preUseCardPlayerIndex;
-      this.gameData.handCards = handCards;
+      this.gameData.handCards = handCards.sort(function (a, b) {
+        return parseFloat(a.id) - parseFloat(b.id);
+      });
       this.gameData.remainCardsNum = remainCardsNum;
       this.gameData.myInfos = myInfos;
       this.gameData.memberIndex = myInfos.memberIndex;
@@ -593,7 +612,9 @@ export default {
       // money, jackpot, currentPlayerIndex
       const { handCards, remainCardsNum, money, jackpot, currentPlayerIndex } =
         result;
-      this.gameData.handCards = handCards;
+      this.gameData.handCards = handCards.sort(function (a, b) {
+        return parseFloat(a.id) - parseFloat(b.id);
+      });
       this.gameData.remainCardsNum = remainCardsNum;
       this.gameData.myInfos.money = money;
       this.gameData.jackpot = jackpot;
@@ -643,7 +664,9 @@ export default {
       } else {
         this.gameData.myInfos.status = status;
       }
-      this.gameData.handCards = handCards;
+      this.gameData.handCards = handCards.sort(function (a, b) {
+        return parseFloat(a.id) - parseFloat(b.id);
+      });
       this.gameData.jackpot = jackpot;
     },
 
@@ -712,7 +735,9 @@ export default {
         return parseFloat(a.id) - parseFloat(b.id);
       });
       this.gameData.tableCards = tableCards;
-      this.gameData.handCards = handCards;
+      this.gameData.handCards = handCards.sort(function (a, b) {
+        return parseFloat(a.id) - parseFloat(b.id);
+      });
       this.gameData.remainCardsNum = remainCardsNum;
       this.gameData.otherPlayerList = otherPlayerList;
     },
