@@ -49,6 +49,7 @@
           <FighterCard
             :key="f.id"
             :index="f.id"
+            :data-id="f.id"
             :status="gameData.myInfos.status"
             :roomStatus="gameData.status"
             :memberIndex="gameData.memberIndex"
@@ -195,6 +196,13 @@ export default {
     };
   },
 
+  updated(){
+    this.myHandCardsAreaDom = document.querySelector(".my_hand_cards");
+    this.otherPlayerAreaDom = document.querySelector(".other_player_area");
+    this.tableAreaDom = document.querySelector(".table_cards_area");
+    this.fighterAreaDom = document.querySelector(".fighters_area");
+  },
+
   mounted() {
     // this.sockets = io.connect("http://localhost:4001");
     this.$socket.open();
@@ -299,10 +307,6 @@ export default {
     };
     this.RegisterUseCardEvent();
 
-    this.myHandCardsAreaDom = document.querySelector(".my_hand_cards");
-    this.otherPlayerAreaDom = document.querySelector(".other_player_area");
-    this.tableAreaDom = document.querySelector(".table_cards_area");
-    this.fighterAreaDom = document.querySelector(".fighters_area");
   },
 
   methods: {
@@ -436,7 +440,6 @@ export default {
             this.windowHeight
           );
 
-          // todo
           // get current card need target
           // check target type dom
           // check if have target index
@@ -455,8 +458,13 @@ export default {
             if (window.targetType == "player") {
               targetAreaDom = this.otherPlayerAreaDom;
             }
+            if (window.targetType == null) {
+              return;
+            }
 
-            targetAreaDom.childNodes.foreach((cd)=>{
+            let items = [...targetAreaDom.childNodes];
+            
+            items.map((cd)=>{
                 let top = cd.offsetTop,
                 width = cd.offsetWidth,
                 left = cd.offsetLeft,
@@ -464,7 +472,7 @@ export default {
 
                 if (x > left && x < left + width && y > top && y < top + height) {
                   // 边缘检测
-                  k = cd.dataset.k;
+                  k = cd.dataset.id;
                   console.log("use target card success");
                   console.log("card id:" , this.currentChosenHandCardId);
                   console.log("target id:" , k);

@@ -62,7 +62,7 @@ export default {
       }
     },
     isNoTargetDrag() {
-      return true;
+      return false;
       // if (
       //   this.playerStatus == "NOT_FOLDED" ||
       //   this.playerStatus == "PAID_USE_CARD"
@@ -82,7 +82,7 @@ export default {
     },
     isTargetDrag() {
       // todo
-      return false;
+      return true;
       // if (
       //   this.playerStatus == "NOT_FOLDED" ||
       //   this.playerStatus == "PAID_USE_CARD"
