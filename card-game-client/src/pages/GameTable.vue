@@ -62,7 +62,26 @@
           />
         </transition-group>
 
-        <div class="table_cards_area">table card list</div>
+        <transition-group
+          class="table_cards_area"
+          tag="div"
+          :css="false"
+          @enter="enter"
+          @before-enter="beforeEnter"
+          @after-enter="afterEnter"
+        >
+          <Card
+            :key="c.k"
+            :index="index"
+            :data="c"
+            :area="`table`"
+            @OnClientUseCardStart="OnClientUseCardStart"
+            :OnChooseHandCard="OnChooseHandCard"
+            :roomStatus="gameData.status"
+            :playerStatus="gameData.myInfos.status"
+            v-for="(c, index) in gameData.tableCards"
+          />
+        </transition-group>
       </div>
 
       <div class="my_area">
@@ -196,7 +215,7 @@ export default {
     };
   },
 
-  updated(){
+  updated() {
     this.myHandCardsAreaDom = document.querySelector(".my_hand_cards");
     this.otherPlayerAreaDom = document.querySelector(".other_player_area");
     this.tableAreaDom = document.querySelector(".table_cards_area");
@@ -306,7 +325,6 @@ export default {
       this.windowHeight = window.innerHeight;
     };
     this.RegisterUseCardEvent();
-
   },
 
   methods: {
@@ -342,7 +360,7 @@ export default {
       this.currentChosenHandCardId = id;
     },
 
-    OnClientUseCardStart({ startX, startY,  targetType }) {
+    OnClientUseCardStart({ startX, startY, targetType }) {
       this.showCanvas = true;
       window.targetDrag = true;
       window.targetType = targetType;
@@ -415,15 +433,63 @@ export default {
             width = this.tableAreaDom.offsetWidth,
             left = this.tableAreaDom.offsetLeft,
             height = this.tableAreaDom.offsetHeight;
-          
 
           let x = e.pageX,
             y = e.pageY;
 
           if (x > left && x < left + width && y > top && y < top + height) {
-            console.log("use no target card success", this.currentChosenHandCardId);
-            console.log("card id:", this.currentChosenHandCardId);
-            // todo
+            if (this.gameData.myInfos.status != "PAID_USE_CARD") {
+              // comfirm
+              // input first use card fee
+              // todo
+              this.$prompt("请输入本回合初次出牌金额", {
+                confirmButtonText: "确定",
+                cancelButtonText: "取消",
+                inputValidator: (value) => {
+                  if (!new RegExp("^[0-9]*[1-9][0-9]*$").test(value)) {
+                    return "必须是正整数";
+                  }
+                  if (value <= 0) {
+                    return "出牌金额必须大于0";
+                  } else if (value < this.gameData.preUseCardFee) {
+                    return (
+                      "上一次出牌金额为:" +
+                      this.gameData.preUseCardFee +
+                      ", 必须大于它"
+                    );
+                  }
+                },
+              })
+                .then(async ({ value }) => {
+                  this.$socket.emit("COMMAND", {
+                    type: "USE_CARD",
+                    roomNumber: this.gameData.roomNumber,
+                    memberIndex: this.gameData.memberIndex,
+                    cardId: this.currentChosenHandCardId,
+                    useCardFee: parseInt(value),
+                    needTarget: false,
+                    targetType: "N/A",
+                    targetId: -1,
+                  });
+                })
+                .catch(() => {
+                  this.$message({
+                    type: "info",
+                    message: "取消出牌",
+                  });
+                });
+            } else {
+              this.$socket.emit("COMMAND", {
+                type: "USE_CARD",
+                roomNumber: this.gameData.roomNumber,
+                memberIndex: this.gameData.memberIndex,
+                cardId: this.currentChosenHandCardId,
+                useCardFee: -1,
+                needTarget: false,
+                targetType: "N/A",
+                targetId: -1,
+              });
+            }
           }
 
           window.cardMoveX = window.cardInitX;
@@ -448,37 +514,94 @@ export default {
             y = e.pageY, // 鼠标松开的y
             k = -1; // 用于记录找到的卡牌的index
 
-            let targetAreaDom;
-            if (window.targetType == "table") {
-              targetAreaDom = this.tableAreaDom; 
-            }
-            if (window.targetType == "fighter") {
-              targetAreaDom = this.fighterAreaDom;
-            }
-            if (window.targetType == "player") {
-              targetAreaDom = this.otherPlayerAreaDom;
-            }
-            if (window.targetType == null) {
-              return;
-            }
+          let targetAreaDom;
+          if (window.targetType == "table") {
+            targetAreaDom = this.tableAreaDom;
+          }
+          if (window.targetType == "fighter") {
+            targetAreaDom = this.fighterAreaDom;
+          }
+          if (window.targetType == "player") {
+            targetAreaDom = this.otherPlayerAreaDom;
+          }
+          if (window.targetType == null) {
+            return;
+          }
 
-            let items = [...targetAreaDom.childNodes];
-            
-            items.map((cd)=>{
-                let top = cd.offsetTop,
-                width = cd.offsetWidth,
-                left = cd.offsetLeft,
-                height = cd.offsetHeight;
+          let items = [...targetAreaDom.childNodes];
 
-                if (x > left && x < left + width && y > top && y < top + height) {
-                  // 边缘检测
-                  k = cd.dataset.id;
-                  console.log("use target card success");
-                  console.log("card id:" , this.currentChosenHandCardId);
-                  console.log("target id:" , k);
-                  // todo
-                }
-            })
+          items.map((cd) => {
+            let top = cd.offsetTop,
+              width = cd.offsetWidth,
+              left = cd.offsetLeft,
+              height = cd.offsetHeight;
+
+            if (x > left && x < left + width && y > top && y < top + height) {
+              if (this.gameData.myInfos.status != "PAID_USE_CARD") {
+                // comfirm
+                // input first use card fee
+                // todo
+                this.$prompt("请输入本回合初次出牌金额", {
+                  confirmButtonText: "确定",
+                  cancelButtonText: "取消",
+                  inputValidator: (value) => {
+                    if (!new RegExp("^[0-9]*[1-9][0-9]*$").test(value)) {
+                      return "必须是正整数";
+                    }
+                    if (value <= 0) {
+                      return "出牌金额必须大于0";
+                    } else if (value < this.gameData.preUseCardFee) {
+                      return (
+                        "上一次出牌金额为:" +
+                        this.gameData.preUseCardFee +
+                        ", 必须大于它"
+                      );
+                    }
+                  },
+                })
+                  .then(async ({ value }) => {
+                    let cI = this.gameData.handCards.findIndex(
+                      (obj) => obj.id == this.currentChosenHandCardId
+                    );
+                    this.$socket.emit("COMMAND", {
+                      type: "USE_CARD",
+                      roomNumber: this.gameData.roomNumber,
+                      memberIndex: this.gameData.memberIndex,
+                      cardId: this.currentChosenHandCardId,
+                      useCardFee: parseInt(value),
+                      needTarget: true,
+                      targetType: this.gameData.handCards[cI].targetType,
+                      targetId: k,
+                    });
+                  })
+                  .catch(() => {
+                    this.$message({
+                      type: "info",
+                      message: "取消出牌",
+                    });
+                  });
+              } else {
+                k = cd.dataset.id;
+                // console.log("use target card success");
+                // console.log("card id:" , this.currentChosenHandCardId);
+                // console.log("target id:" , k);
+
+                let cI = this.gameData.handCards.findIndex(
+                  (obj) => obj.id == this.currentChosenHandCardId
+                );
+                this.$socket.emit("COMMAND", {
+                  type: "USE_CARD",
+                  roomNumber: this.gameData.roomNumber,
+                  memberIndex: this.gameData.memberIndex,
+                  cardId: this.currentChosenHandCardId,
+                  useCardFee: -1,
+                  needTarget: true,
+                  targetType: this.gameData.handCards[cI].targetType,
+                  targetId: k,
+                });
+              }
+            }
+          });
         }
       };
     },
@@ -703,6 +826,7 @@ export default {
     OnEndUseCard(result) {
       // status currentPlayerIndex
       const { status, currentPlayerIndex } = result;
+      this.gameData.currentPlayerIndex = currentPlayerIndex;
       if (currentPlayerIndex == this.gameData.memberIndex) {
         this.gameData.myInfos.status = status;
       } else {
@@ -905,6 +1029,13 @@ export default {
   right: 0px;
   top: 20%;
   height: 55%;
+  display: flex;
+  padding: 10px;
+  justify-content: center;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  column-gap: 10px;
+  row-gap: 10px;
 }
 
 #animationCanvas {

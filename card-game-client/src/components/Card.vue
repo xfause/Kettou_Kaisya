@@ -62,7 +62,7 @@ export default {
       }
     },
     isNoTargetDrag() {
-      return false;
+      return true;
       // if (
       //   this.playerStatus == "NOT_FOLDED" ||
       //   this.playerStatus == "PAID_USE_CARD"
@@ -82,7 +82,7 @@ export default {
     },
     isTargetDrag() {
       // todo
-      return true;
+      return false;
       // if (
       //   this.playerStatus == "NOT_FOLDED" ||
       //   this.playerStatus == "PAID_USE_CARD"
@@ -105,7 +105,6 @@ export default {
     mouseUp(e){
       if (this.isNoTargetDrag) {
         this.noTargetDrag = false;
-        window.noTargetDrag = false;
         this.cardDom.style["transition"] = "all 0s";
         this.cardDom.style["transform"] = `translate(${
           e.pageX

@@ -545,12 +545,16 @@ function OnFoldCard(args, socket) {
 }
 
 function OnUseCard(args, socket) {
-  let { roomNumber, memberIndex, cardId, useCardFee } = args;
+  let { roomNumber, memberIndex, cardId, useCardFee, needTarget, targetType, targetId } = args;
   // let preUseCardFee = memoryData[roomNumber].preUseCardFee;
   let currUserIndex = memoryData[roomNumber]["usersList"].findIndex((obj => obj.memberIndex == memberIndex));
 
   // first use card
   if (memoryData[roomNumber]["usersList"][currUserIndex].status !== "PAID_USE_CARD") {
+
+    if (useCardFee < memoryData[roomNumber].preUseCardFee) {
+      return;
+    }
 
     memoryData[roomNumber]["usersList"][currUserIndex].status = "PAID_USE_CARD";
     memoryData[roomNumber]["usersList"][currUserIndex].money -= useCardFee;
@@ -565,8 +569,13 @@ function OnUseCard(args, socket) {
   if (card !== null) {
     memoryData[roomNumber].tableCards.push(card);
     // todo
-    //active card
-    ActiveCard(card, memoryData[roomNumber]);
+    // active card
+    // ActiveCard(card, memoryData[roomNumber]);
+    // if (needTarget) {
+    //   ActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId);
+    // } else {
+    //   ActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId);
+    // }
   }
 
   // send table cards, hand cards, jackpot, status to curr player
