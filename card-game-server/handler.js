@@ -1,9 +1,6 @@
 const {
   Cards,
-  CardType,
-  AttackType,
-  AttackAnimationType,
-
+  FighterStatusList,
   Fighters,
   Judgers,
   FateCards
@@ -25,9 +22,10 @@ const fighterNumLimit = 4;
 const checkCardFee = 50;
 
 // memoryData->value
-// let v = { 
+// let v = {
 //     seed, // 随机数种子
 //     rand: seedrandom(seed), // 随机方法
+//     fighterStatusList
 //     jackpot: 999,
 //     status: "PREPARE / BET / CARD / JUDGE / CALC"
 //     currentPlayerIndex: 0,
@@ -148,7 +146,8 @@ function Connect(args, socket, socketServer) {
 
       memoryData[roomNumber] = {
         seed, // 随机数种子
-        rand: seedrandom(seed), // 随机方法
+        rand: seedrandom(seed), // 随机方法,
+        fighterStatusList: FighterStatusList
       };
       let usersList = [];
 
@@ -190,6 +189,7 @@ function InitGameData(roomNumber) {
   let gameData = {};
   gameData.seed = memoryData[roomNumber].seed;
   gameData.rand = memoryData[roomNumber].rand;
+  gameData.fighterStatusList = memoryData[roomNumber].fighterStatusList;
   gameData.currentPlayerIndex = memoryData[roomNumber]["usersList"][random].memberIndex;
   gameData.startPlayerIndex = memoryData[roomNumber]["usersList"][random].memberIndex;
   gameData.currentRound = 1;
@@ -269,7 +269,7 @@ function GetNextPlayerIndex(currIndex, usersList, roomPlayerLimit) {
 }
 
 function SendInitDataToAll(roomNumber) {
-  const { seed, rand, jackpot, status, currentRound, currentPlayerIndex,
+  const { seed, rand, fighterStatusList, jackpot, status, currentRound, currentPlayerIndex,
     judgerCard, fightersInfo,
     preUseCardFee, preUseCardPlayerIndex,
     tableCards,
@@ -294,6 +294,7 @@ function SendInitDataToAll(roomNumber) {
     });
     u.socket.emit("INIT_DATA", {
       seed, rand, jackpot, status, currentRound, roundNumLimit, checkCardFee,
+      fighterStatusList,
       roomNumber,
       currentPlayerIndex,
       judgerCard, fightersInfo,
@@ -312,7 +313,7 @@ function SendInitDataToAll(roomNumber) {
 }
 
 function RestoreGameData(roomNumber, userId) {
-  const { seed, rand, jackpot, status, currentRound, currentPlayerIndex,
+  const { seed, rand, fighterStatusList, jackpot, status, currentRound, currentPlayerIndex,
     judgerCard, fateCard, fightersInfo,
     preUseCardFee, preUseCardPlayerIndex,
     tableCards,
@@ -331,6 +332,7 @@ function RestoreGameData(roomNumber, userId) {
 
   player.socket.emit("RESTORE_DATA", {
     seed, rand, jackpot, status, currentRound, roundNumLimit, checkCardFee,
+    fighterStatusList,
     currentPlayerIndex,
     judgerCard, fateCard, fightersInfo,
     tableCards,
@@ -567,15 +569,20 @@ function OnUseCard(args, socket) {
   let cardIndexInHandCards = memoryData[roomNumber]["usersList"][currUserIndex].handCards.findIndex((obj => obj.id == cardId));
   let card = memoryData[roomNumber]["usersList"][currUserIndex].handCards.splice(cardIndexInHandCards, 1)[0];
   if (card !== null) {
-    memoryData[roomNumber].tableCards.push(card);
     // todo
     // active card
     // ActiveCard(card, memoryData[roomNumber]);
-    // if (needTarget) {
-    //   ActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId);
-    // } else {
-    //   ActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId);
-    // }
+    if (needTarget) {
+      let t = {
+        ...card
+      };
+      t.targetId = targetId;
+      memoryData[roomNumber].tableCards.push(t);
+      ActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId);
+    } else {
+      memoryData[roomNumber].tableCards.push(card);
+      ActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId);
+    }
   }
 
   // send table cards, hand cards, jackpot, status to curr player
@@ -634,7 +641,7 @@ function JudgeTableCards(roomNumber) {
   });
 
   // active card
-  memoryData[roomNumber].tableCards.map(card => {
+  memoryData[roomNumber].tableCards.map((card, index) => {
     // todo
     ActiveCard(card, memoryData[roomNumber]);
     memoryData[roomNumber].usersList.map(p => {
@@ -658,6 +665,7 @@ function JudgeTableCards(roomNumber) {
       p.socket.emit("JUDGE_ACTIVE_CARD", {
         seed, rand, jackpot, status: p.status,
         currentRound, currentPlayerIndex,
+        currentTableCardIndex:index,
         judgerCard, fateCard, fightersInfo,
         tableCards,
         preUseCardFee, preUseCardPlayerIndex,

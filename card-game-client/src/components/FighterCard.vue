@@ -19,6 +19,13 @@
           <div>health:{{ health }}</div>
           <div>magic:{{ magic }}</div>
           <div>描述:{{ desc }}</div>
+          <div
+            :key="s.name"
+            v-for="s in this.fighter.statusList"
+          >
+            词缀:{{GetStatusDesc(s)}}
+          </div>
+          
           <div>赏金倍率:{{ magnification }}</div>
           <div
             v-if="
@@ -77,7 +84,8 @@ export default {
     memberIndex: Number,
     roomNumber: String,
     betInfos: Array,
-    fighterBetInfos: Array
+    fighterBetInfos: Array,
+    fighterStatusList: Array
   },
   data() {
     return {
@@ -100,6 +108,14 @@ export default {
     });
   },
   methods: {
+    GetStatusDesc(s){
+      let t = this.fighterStatusList.find(x => x.name === s);
+      if (t==undefined) {
+        return s;
+      } else {
+        return t.desc;
+      }
+    },
     OnShowMoneyInput() {
       EventBus.$emit("otherShowMoneyInput", {
         id: this.id,

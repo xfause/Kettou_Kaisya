@@ -1,4 +1,4 @@
-function ActiveCard(card, roomData) {
+function ActiveCard(card, roomData, needTarget, targetType, targetId) {
     // todo
     // do nothing now
 }

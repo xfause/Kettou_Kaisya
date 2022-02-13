@@ -22,7 +22,6 @@ export default {
   props: {
     index: Number, // 当前卡牌的index
     data: Object, // 卡牌的信息
-    area: String, // 所在区域
     OnChooseHandCard: Function, // 选择卡牌的回调
     roomStatus: String, //房间状态
     playerStatus: String, //玩家状态
@@ -193,4 +192,4 @@ export default {
   border-bottom-right-radius: 5px;
   border-bottom-left-radius: 5px;
 }
-</style>>
+</style>

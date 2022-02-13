@@ -54,6 +54,7 @@
             :roomStatus="gameData.status"
             :memberIndex="gameData.memberIndex"
             :roomNumber="gameData.roomNumber"
+            :fighterStatusList="gameData.fighterStatusList"
             :money="gameData.myInfos.money"
             :betInfos="gameData.betInfos"
             :fighterBetInfos="GetFighterBetInfos(f.id)"
@@ -70,15 +71,14 @@
           @before-enter="beforeEnter"
           @after-enter="afterEnter"
         >
-          <Card
+          <TableCard
             :key="c.k"
             :index="index"
             :data="c"
-            :area="`table`"
-            @OnClientUseCardStart="OnClientUseCardStart"
-            :OnChooseHandCard="OnChooseHandCard"
             :roomStatus="gameData.status"
             :playerStatus="gameData.myInfos.status"
+            :currentTableCardIndex="gameData.currentTableCardIndex"
+            :cardIndex="index"
             v-for="(c, index) in gameData.tableCards"
           />
         </transition-group>
@@ -111,7 +111,6 @@
             :key="c.k"
             :index="index"
             :data="c"
-            :area="`hand`"
             @OnClientUseCardStart="OnClientUseCardStart"
             :OnChooseHandCard="OnChooseHandCard"
             :roomStatus="gameData.status"
@@ -150,6 +149,7 @@ import JudgerCard from "../components/JudgerCard";
 import FateCard from "../components/FateCard";
 import FighterCard from "../components/FighterCard";
 import Card from "../components/Card";
+import TableCard from "../components/TableCard";
 import Velocity from "velocity-animate";
 
 export default {
@@ -160,6 +160,7 @@ export default {
     OtherPlayerInfo,
     RemainCards,
     Card,
+    TableCard,
     JudgerCard,
     FateCard,
     FighterCard,
@@ -189,6 +190,8 @@ export default {
         roomNumber: "-1",
         checkCardFee: -1,
 
+        fighterStatusList: [],
+
         rankList: [],
 
         jackpot: 0,
@@ -198,6 +201,8 @@ export default {
         currentPlayerIndex: -1,
         judgerCard: null,
         fateCard: null,
+
+        currentTableCardIndex: -1,
 
         winnerFighterIndex: -1,
         // 玩家下注给几号fighter 下注了多少钱
@@ -610,6 +615,7 @@ export default {
       const {
         jackpot,
         status,
+        fighterStatusList,
         currentRound,
         roundNumLimit,
         checkCardFee,
@@ -627,6 +633,7 @@ export default {
       } = result;
       this.gameData.jackpot = jackpot;
       this.gameData.status = status;
+      this.gameData.fighterStatusList = fighterStatusList || [];
       this.gameData.currentRound = currentRound;
       this.gameData.roundNumLimit = roundNumLimit;
       this.gameData.checkCardFee = checkCardFee;
@@ -652,6 +659,7 @@ export default {
       const {
         jackpot,
         status,
+        fighterStatusList,
         currentRound,
         roundNumLimit,
         checkCardFee,
@@ -670,6 +678,7 @@ export default {
       } = result;
       this.gameData.jackpot = jackpot;
       this.gameData.status = status;
+      this.gameData.fighterStatusList = fighterStatusList || [];
       this.gameData.roomNumber = roomNumber;
       this.gameData.currentRound = currentRound;
       this.gameData.roundNumLimit = roundNumLimit;
@@ -857,6 +866,7 @@ export default {
         handCards,
         remainCardsNum,
         otherPlayerList,
+        currentTableCardIndex
       } = result;
       this.gameData.jackpot = jackpot;
       this.gameData.status = status;
@@ -867,6 +877,7 @@ export default {
         return parseFloat(a.id) - parseFloat(b.id);
       });
       this.gameData.tableCards = tableCards;
+      this.gameData.currentTableCardIndex = currentTableCardIndex;
       this.gameData.handCards = handCards.sort(function (a, b) {
         return parseFloat(a.id) - parseFloat(b.id);
       });
@@ -942,12 +953,13 @@ export default {
   height: 100%;
   display: flex;
   padding: 10px;
-  justify-content: center;
+  justify-content: flex-start;
   box-sizing: border-box;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   background-color: #00f;
   float: left;
   column-gap: 10px;
+  overflow-x: scroll;   
 }
 
 .my_area {
@@ -988,11 +1000,12 @@ export default {
   background-color: white;
   display: flex;
   padding: 10px;
-  justify-content: center;
+  justify-content: flex-start;
   box-sizing: border-box;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   column-gap: 10px;
   row-gap: 10px;
+  overflow-x: scroll;   
 }
 
 .table_area {
@@ -1015,11 +1028,12 @@ export default {
   margin-right: 55%;
   display: flex;
   padding: 10px;
-  justify-content: center;
+  justify-content: flex-start;
   box-sizing: border-box;
   flex-wrap: wrap;
   column-gap: 10px;
   row-gap: 10px;
+  overflow-y: scroll;   
 }
 
 .table_cards_area {
@@ -1031,11 +1045,12 @@ export default {
   height: 55%;
   display: flex;
   padding: 10px;
-  justify-content: center;
+  justify-content: flex-start;
   box-sizing: border-box;
   flex-wrap: wrap;
   column-gap: 10px;
   row-gap: 10px;
+  overflow-y: scroll;   
 }
 
 #animationCanvas {

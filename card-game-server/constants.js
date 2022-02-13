@@ -21,77 +21,6 @@
 //     onTableCardChange: function() {},
 // }
 
-const CardType = {
-    EFFECT: 1, // 效果牌
-    CHARACTER: 2, // 人物牌
-};
-
-const OldCardList = [
-    {
-        id: 1,
-        name: "励志的演说家",
-        cardType: CardType.CHARACTER,
-        cost: 2,
-        content: ``,
-        attack: 1,
-        life: 2,
-        attackBase: 1,
-        lifeBase: 2,
-        type: [""]
-    },
-    {
-        id: 5,
-        name: "高级程序员",
-        cardType: CardType.CHARACTER,
-        cost: 7,
-        content: ``,
-        attack: 7,
-        life: 7,
-        attackBase: 7,
-        lifeBase: 7,
-        type: [""],
-        isStrong: true
-    },
-    {
-        id: 6,
-        name: "开发助理",
-        cardType: CardType.CHARACTER,
-        cost: 1,
-        content: ``,
-        attack: 1,
-        life: 1,
-        attackBase: 1,
-        lifeBase: 1,
-        type: [""]
-    },
-    {
-        id: 8,
-        name: "丑陋的开发鼓励师",
-        cardType: CardType.CHARACTER,
-        cost: 1,
-        content: `精力充沛`,
-        attack: 1,
-        life: 1,
-        attackBase: 1,
-        lifeBase: 1,
-        type: [""],
-        isFullOfEnergy: true
-    }
-];
-
-const AttackType = {
-    ATTACK: 1,
-    BE_ATTACKED: 2
-};
-
-const AttackAnimationType = {
-    NORMAL: 1
-};
-
-
-
-// new
-
 // todo
 const CardList = [
   {
@@ -101,11 +30,12 @@ const CardList = [
     desc: "desc 1",
     needTarget: true,
     targetType: "table",
-    OnCardStage: function(){
-      
+    targetId: -1,
+    OnCardStage: function () {
+
     },
-    OnJudgeStage: function(){
-      
+    OnJudgeStage: function () {
+
     }
   }, {
     id: 2,
@@ -113,11 +43,11 @@ const CardList = [
     type: "EFFECT",
     desc: "desc 2",
     needTarget: false,
-    OnCardStage: function(){
-      
+    OnCardStage: function () {
+
     },
-    OnJudgeStage: function(){
-      
+    OnJudgeStage: function () {
+
     }
   }, {
     id: 3,
@@ -126,11 +56,12 @@ const CardList = [
     desc: "desc 3",
     needTarget: true,
     targetType: "fighter",
-    OnCardStage: function(){
-      
+    targetId: -1,
+    OnCardStage: function () {
+
     },
-    OnJudgeStage: function(){
-      
+    OnJudgeStage: function () {
+
     }
   }, {
     id: 4,
@@ -138,116 +69,120 @@ const CardList = [
     type: "EFFECT",
     desc: "desc 4",
     needTarget: false,
-    OnCardStage: function(){
-      
+    OnCardStage: function () {
+
     },
-    OnJudgeStage: function(){
-      
+    OnJudgeStage: function () {
+
     }
   }
 ]
 
 const JudgerList = [
-    {
-        id: 1,
-        name: '老板的侄子',
-        desc: "本回合裁判没有效果",
-        OnBetStage: function(){
-            
-        },
-        OnCardStage: function () {
-            
-        },
-        OnJudgeStage: function () {
-            
-        },
-        OnCalcStage: function () {
-            
-        }
+  {
+    id: 1,
+    name: '老板的侄子',
+    desc: "本回合裁判没有效果",
+    OnBetStage: function () {
+
+    },
+    OnCardStage: function () {
+
+    },
+    OnJudgeStage: function () {
+
+    },
+    OnCalcStage: function () {
+
     }
+  },
 ];
 
 const FateCardList = [
-    {
-        id: 1,
-        name: 'fate 1',
-        desc: "fate desc 1",
-        OnBetStage: function(){
-            
-        },
-        OnCardStage: function () {
-            
-        },
-        OnJudgeStage: function () {
-            
-        },
-        OnCalcStage: function () {
-            
-        }
-    }
-];
-
-const FighterList = [{
+  {
     id: 1,
-    name: "fighter1",
-    health: 1,
-    magic: 1,
-    healthBase: 1,
-    magicBase: 1,
-    desc: "test content 1",
-    // 倍率
-    magnification: 1.0,
+    name: 'fate 1',
+    desc: "do nothing",
+    OnBetStage: function () {
+
+    },
     OnCardStage: function () {
-        
+
     },
     OnJudgeStage: function () {
-        
+
     },
     OnCalcStage: function () {
-        
+
     }
+  }
+];
+
+const FighterStatusList = [
+  {
+    name: "NO_HIT",
+    desc:"不能被施加直击卡"
+  },
+  {
+    name: "HALF_MAGIC",
+    desc: "施加在它身上的效果卡法力值减半"
+  }
+  ,{
+    name: "NUM_OPPOSITE",
+    desc: "在它身上施加的属性效果取相反数"
+  }
+]
+
+const FighterList = [{
+  id: 1,
+  name: "不死的骷髅战士",
+  health: 5 ,
+  magic: 0,
+  healthBase: 5,
+  magicBase: 0,
+  desc: "毕竟它只是一副骨架",
+  statusList: ["NO_HIT"],
+  // 倍率
+  magnification: 1.0,
 }, {
-    id: 2,
-    name: "fighter2",
-    health: 2,
-    magic: 2,
-    healthBase: 2,
-    magicBase: 2,
-    desc: "test content 2",
-    // 倍率
-    magnification: 1.0,
-    // todo
+  id: 2,
+  name: "稳定的能量体",
+  health: 5,
+  magic: 5,
+  healthBase: 5,
+  magicBase: 5,
+  desc: "不像它暴躁的同族,这个能量体天性温和",
+  statusList: ["HALF_MAGIC"],
+  // 倍率
+  magnification: 1.0,
 }, {
-    id: 3,
-    name: "fighter3",
-    health: 3,
-    magic: 3,
-    healthBase: 3,
-    magicBase: 3,
-    desc: "test content 3",
-    // 倍率
-    magnification: 1.0,
-    // todo
+  id: 3,
+  name: "丑陋的魅魔",
+  health: 9,
+  magic: 0,
+  healthBase: 9,
+  magicBase: 0,
+  desc: "它很渴望一次真实的爱情",
+  statusList: [],
+  // 倍率
+  magnification: 1.0,
 }, {
-    id: 4,
-    name: "fighter4",
-    health: 4,
-    magic: 4,
-    healthBase: 4,
-    magicBase: 4,
-    desc: "test content 4",
-    // 倍率
-    magnification: 1.0,
-    // todo
+  id: 4,
+  name: "fighter4",
+  health: 6,
+  magic: -2,
+  healthBase: 6,
+  magicBase: -2,
+  desc: "尽管它很开心,看起来还是充满负能量",
+  statusList: ["NUM_OPPOSITE"],
+  // 倍率
+  magnification: 1.0,
 }];
 
 module.exports = {
-    CardType,
-    Cards: CardList,
-    AttackType,
-    AttackAnimationType,
-
-    Fighters: FighterList,
-    Judgers: JudgerList,
-    FateCards: FateCardList,
+  Cards: CardList,
+  Fighters: FighterList,
+  Judgers: JudgerList,
+  FateCards: FateCardList,
+  FighterStatusList: FighterStatusList,
 }
