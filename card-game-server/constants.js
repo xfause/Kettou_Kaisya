@@ -21,63 +21,6 @@
 //     onTableCardChange: function() {},
 // }
 
-// todo
-const CardList = [
-  {
-    id: 1,
-    name: "card 1",
-    type: "HIT",
-    desc: "desc 1",
-    needTarget: true,
-    targetType: "table",
-    targetId: -1,
-    OnCardStage: function () {
-
-    },
-    OnJudgeStage: function () {
-
-    }
-  }, {
-    id: 2,
-    name: "card 2",
-    type: "EFFECT",
-    desc: "desc 2",
-    needTarget: false,
-    OnCardStage: function () {
-
-    },
-    OnJudgeStage: function () {
-
-    }
-  }, {
-    id: 3,
-    name: "card 3",
-    type: "HIT",
-    desc: "desc 3",
-    needTarget: true,
-    targetType: "fighter",
-    targetId: -1,
-    OnCardStage: function () {
-
-    },
-    OnJudgeStage: function () {
-
-    }
-  }, {
-    id: 4,
-    name: "card 4",
-    type: "EFFECT",
-    desc: "desc 4",
-    needTarget: false,
-    OnCardStage: function () {
-
-    },
-    OnJudgeStage: function () {
-
-    }
-  }
-]
-
 const JudgerList = [
   {
     id: 1,
@@ -168,7 +111,7 @@ const FighterList = [{
   magnification: 1.0,
 }, {
   id: 4,
-  name: "fighter4",
+  name: "开心的暗影怪",
   health: 6,
   magic: -2,
   healthBase: 6,
@@ -180,7 +123,6 @@ const FighterList = [{
 }];
 
 module.exports = {
-  Cards: CardList,
   Fighters: FighterList,
   Judgers: JudgerList,
   FateCards: FateCardList,

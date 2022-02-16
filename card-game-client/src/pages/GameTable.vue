@@ -74,6 +74,7 @@
           <TableCard
             :key="c.k"
             :index="index"
+            :data-id="index"
             :data="c"
             :roomStatus="gameData.status"
             :playerStatus="gameData.myInfos.status"
@@ -545,7 +546,7 @@ export default {
               if (this.gameData.myInfos.status != "PAID_USE_CARD") {
                 // comfirm
                 // input first use card fee
-                // todo
+                k = cd.dataset.id;
                 this.$prompt("请输入本回合初次出牌金额", {
                   confirmButtonText: "确定",
                   cancelButtonText: "取消",
@@ -797,7 +798,7 @@ export default {
 
     OnMyUseCard(result) {
       // tableCards, handCards, jackpot, status
-      const { tableCards, handCards, jackpot, status } = result;
+      const { tableCards, handCards, jackpot, status, fightersInfo } = result;
       this.gameData.tableCards = tableCards;
       if (!this.gameData.myInfos) {
         this.gameData.myInfos = { status };
@@ -808,6 +809,9 @@ export default {
         return parseFloat(a.id) - parseFloat(b.id);
       });
       this.gameData.jackpot = jackpot;
+      this.gameData.fightersInfo = fightersInfo.sort(function (a, b) {
+        return parseFloat(a.id) - parseFloat(b.id);
+      });
     },
 
     OnOtherUseCard(result) {
@@ -820,6 +824,7 @@ export default {
         jackpot,
         preUseCardFee,
         tableCards,
+        fightersInfo
       } = result;
       this.gameData.jackpot = jackpot;
       this.gameData.preUseCardFee = preUseCardFee;
@@ -828,8 +833,10 @@ export default {
         (obj) => obj.memberIndex == useCardPlayerIndex
       );
       this.gameData.otherPlayerList[pIndex].status = useCardPlayerStatus;
-      this.gameData.otherPlayerList[pIndex].handCardsNum =
-        useCardPlayerHandCardsNumber;
+      this.gameData.otherPlayerList[pIndex].handCardsNum = useCardPlayerHandCardsNumber;
+      this.gameData.fightersInfo = fightersInfo.sort(function (a, b) {
+        return parseFloat(a.id) - parseFloat(b.id);
+      });
     },
 
     OnEndUseCard(result) {
@@ -1005,7 +1012,7 @@ export default {
   flex-wrap: nowrap;
   column-gap: 10px;
   row-gap: 10px;
-  overflow-x: scroll;   
+  /* overflow-x: scroll;    */
 }
 
 .table_area {

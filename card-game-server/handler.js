@@ -1,14 +1,20 @@
 const {
-  Cards,
   FighterStatusList,
   Fighters,
   Judgers,
   FateCards
 } = require("./constants");
+const {
+  Cards
+} = require("./card_list");
 
 const { shuffle } = require("./utils");
 
-const { ActiveCard } = require("./active_card");
+const {
+  OnUseStageActiveCard,
+  OnJudgeStageActiveCard,
+  OnCalcStageActiveCard
+} = require("./active_card");
 
 const uuidv4 = require('uuid/v4');
 const seedrandom = require("seedrandom");
@@ -571,17 +577,18 @@ function OnUseCard(args, socket) {
   if (card !== null) {
     // todo
     // active card
-    // ActiveCard(card, memoryData[roomNumber]);
     if (needTarget) {
       let t = {
         ...card
       };
       t.targetId = targetId;
       memoryData[roomNumber].tableCards.push(t);
-      ActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId);
+      let tempRoomData = OnUseStageActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId);
+      memoryData[roomNumber] = {...tempRoomData};
     } else {
       memoryData[roomNumber].tableCards.push(card);
-      ActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId);
+      let tempRoomData = OnUseStageActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId);
+      memoryData[roomNumber] = {...tempRoomData};
     }
   }
 
@@ -590,7 +597,8 @@ function OnUseCard(args, socket) {
     tableCards: memoryData[roomNumber].tableCards,
     handCards: memoryData[roomNumber]["usersList"][currUserIndex].handCards,
     jackpot: memoryData[roomNumber].jackpot,
-    status: memoryData[roomNumber]["usersList"][currUserIndex].status
+    status: memoryData[roomNumber]["usersList"][currUserIndex].status,
+    fightersInfo: memoryData[roomNumber].fightersInfo,
   })
 
   // send table cards, hand cards number of curr_player, jackpot, preUseCardFee to other player
@@ -603,6 +611,7 @@ function OnUseCard(args, socket) {
         jackpot: memoryData[roomNumber].jackpot,
         preUseCardFee: memoryData[roomNumber].preUseCardFee,
         tableCards: memoryData[roomNumber].tableCards,
+        fightersInfo: memoryData[roomNumber].fightersInfo,
       });
     }
   })
@@ -643,7 +652,7 @@ function JudgeTableCards(roomNumber) {
   // active card
   memoryData[roomNumber].tableCards.map((card, index) => {
     // todo
-    ActiveCard(card, memoryData[roomNumber]);
+    // ActiveCard(card, memoryData[roomNumber]);
     memoryData[roomNumber].usersList.map(p => {
 
       let currentPlayerHandCards = p.handCards;
