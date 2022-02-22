@@ -61,18 +61,42 @@ const FateCardList = [
   }
 ];
 
+// type
+// CONST 常驻
+// TEMP 会更改
+// TEMP_IN_TURN 在END_TURN的时候去除
+
 const FighterStatusList = [
   {
     name: "NO_HIT",
-    desc:"不能被施加直击卡"
+    desc: "不能被施加直击卡",
+    type: "CONST"
   },
   {
     name: "HALF_MAGIC",
-    desc: "施加在它身上的效果卡法力值减半"
+    desc: "施加在它身上的效果卡法力值减半",
+    type: "CONST"
   }
   ,{
     name: "NUM_OPPOSITE",
-    desc: "在它身上施加的属性效果取相反数"
+    desc: "在它身上施加的属性效果取相反数",
+    type: "CONST"
+  }, {
+    name: "WARM_UP",
+    desc: "本回合内下一张卡牌效果+2/+1",
+    type: "TEMP"
+  }, {
+    name: "WARM_UP_PLUS",
+    desc: "本回合内下一张卡牌效果+4/+1",
+    type: "TEMP"
+  }, {
+    name: "WEAKEN_TWICE",
+    desc: "在该卡牌生效后,指定角斗士接下来两次生命值/法力值变化-3/-1",
+    type: "TEMP_IN_TURN"
+  }, {
+    name: "STRENGTHEN_TWICE",
+    desc: "在该卡牌生效后，指定角斗士接下来三次生命值/法力值变化+2/+0",
+    type: "TEMP_IN_TURN"
   }
 ]
 

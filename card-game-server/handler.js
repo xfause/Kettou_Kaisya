@@ -63,7 +63,8 @@ const checkCardFee = 50;
 //         roomNumber: "xxx",
 //         memberIndex: 1,
 //         money: 999,
-//         status: "BETED / NOT_BETED / FOLDED/ NOT_FOLDED / PAID_USE_CARD"
+//         status: "BETED / NOT_BETED / FOLDED/ NOT_FOLDED / PAID_USE_CARD",
+//         statusList: [],
 //         betInfos: [{
 //             fighterId: "xxx",
 //             betMoney: 999
@@ -231,6 +232,7 @@ function InitGameData(roomNumber) {
   gameData.usersList.map(u => {
     u.money = 5000;
     u.status = "NOT_BETED";
+    u.statusList = [];
     u.betInfos = [];
 
     // get hand cards;
@@ -286,6 +288,7 @@ function SendInitDataToAll(roomNumber) {
     let currentPlayerRemainCardsNum = usersList[cIndex].remainCards.length;
     let currPlayerMoney = usersList[cIndex].money;
     let currPlayerStatus = usersList[cIndex].status;
+    let currPlayerStatusList = usersList[cIndex].statusList;
     let currPlayerMemberIndex = usersList[cIndex].memberIndex;
     let otherPlayerList = [];
     usersList.map(p => {
@@ -311,6 +314,7 @@ function SendInitDataToAll(roomNumber) {
       myInfos: {
         money: currPlayerMoney,
         status: currPlayerStatus,
+        statusList: currPlayerStatusList,
         memberIndex: currPlayerMemberIndex,
       },
       otherPlayerList
@@ -348,6 +352,7 @@ function RestoreGameData(roomNumber, userId) {
     myInfos: {
       money: player.money,
       status: player.status,
+      statusList: player.statusList,
       memberIndex: player.memberIndex,
     },
     otherPlayerList,
@@ -368,6 +373,7 @@ function OnEndBetFighters(args, socket) {
       playerBetStatus: memoryData[roomNumber]["usersList"].map(o => {
         return {
           status: o.status,
+          statusList: o.statusList,
           memberIndex: o.memberIndex,
           userId: o.userId,
           money: o.money,
@@ -430,6 +436,7 @@ function OnBetFighters(args, socket) {
       playerBetStatus: memoryData[roomNumber]["usersList"].map(o => {
         return {
           status: o.status,
+          statusList: o.statusList,
           memberIndex: o.memberIndex,
           userId: o.userId,
           money: o.money,
@@ -583,11 +590,11 @@ function OnUseCard(args, socket) {
       };
       t.targetId = targetId;
       memoryData[roomNumber].tableCards.push(t);
-      let tempRoomData = OnUseStageActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId);
+      let tempRoomData = OnUseStageActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId, currUserIndex);
       memoryData[roomNumber] = {...tempRoomData};
     } else {
       memoryData[roomNumber].tableCards.push(card);
-      let tempRoomData = OnUseStageActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId);
+      let tempRoomData = OnUseStageActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId, currUserIndex);
       memoryData[roomNumber] = {...tempRoomData};
     }
   }
@@ -598,6 +605,8 @@ function OnUseCard(args, socket) {
     handCards: memoryData[roomNumber]["usersList"][currUserIndex].handCards,
     jackpot: memoryData[roomNumber].jackpot,
     status: memoryData[roomNumber]["usersList"][currUserIndex].status,
+    // todo 
+    // all player statusList can be changed
     fightersInfo: memoryData[roomNumber].fightersInfo,
   })
 
@@ -608,6 +617,8 @@ function OnUseCard(args, socket) {
         useCardPlayerIndex: memberIndex,
         useCardPlayerHandCardsNumber: memoryData[roomNumber]["usersList"][currUserIndex].handCards.length,
         useCardPlayerStatus: memoryData[roomNumber]["usersList"][currUserIndex].status,
+        // todo 
+        // all player statusList can be changed
         jackpot: memoryData[roomNumber].jackpot,
         preUseCardFee: memoryData[roomNumber].preUseCardFee,
         tableCards: memoryData[roomNumber].tableCards,
@@ -628,9 +639,15 @@ function OnEndUseCard(args, socket) {
     roomPlayerLimit
   );
 
+  // todo
+  // card on END TURN
+  // player statusList on END TURN
+
   memoryData[roomNumber].usersList.map(p => {
     p.socket.emit("END_USE_CARD", {
       status: memoryData[roomNumber]["usersList"][currUserIndex].status,
+      // todo 
+      // all player statusList can be changed
       currentPlayerIndex: memoryData[roomNumber].currentPlayerIndex
     });
   });
@@ -663,16 +680,19 @@ function JudgeTableCards(roomNumber) {
           money: o.money,
           handCardsNum: o.handCards.length,
           memberIndex: o.memberIndex,
-          status: o.status
+          status: o.status,
+          statusList: o.statusList
         })
       })
 
-      const { seed, rand, jackpot, currentRound, currentPlayerIndex,
+      const { seed, rand, status, jackpot, currentRound, currentPlayerIndex,
         judgerCard, fateCard, fightersInfo,
         preUseCardFee, preUseCardPlayerIndex,
         tableCards } = memoryData[roomNumber];
       p.socket.emit("JUDGE_ACTIVE_CARD", {
-        seed, rand, jackpot, status: p.status,
+        seed, rand, jackpot, status,
+        playerStatus: p.status,
+        playerStatusList: p.statusList,
         currentRound, currentPlayerIndex,
         currentTableCardIndex:index,
         judgerCard, fateCard, fightersInfo,

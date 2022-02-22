@@ -704,7 +704,7 @@ export default {
 
     OnPlayerBetFighters(result) {
       // playerBetStatus:{
-      //     status, memberIndex
+      //     status, statusList, memberIndex
       //     userId, money,
       //     betInfos
       //     currentPlayerIndex
@@ -718,6 +718,7 @@ export default {
         if (p.memberIndex == this.gameData.memberIndex) {
           // my bet
           this.gameData.myInfos.status = p.status;
+          this.gameData.myInfos.statusList = p.statusList;
           this.gameData.myInfos.money = p.money;
           this.gameData.currentPlayerIndex = p.currentPlayerIndex;
           this.gameData.betInfos = p.betInfos;
@@ -797,9 +798,11 @@ export default {
     },
 
     OnMyUseCard(result) {
-      // tableCards, handCards, jackpot, status
+      // tableCards, handCards, jackpot, status, statusList
       const { tableCards, handCards, jackpot, status, fightersInfo } = result;
       this.gameData.tableCards = tableCards;
+      // todo 
+      // all player statusList can be changed
       if (!this.gameData.myInfos) {
         this.gameData.myInfos = { status };
       } else {
@@ -817,6 +820,9 @@ export default {
     OnOtherUseCard(result) {
       // useCardPlayerIndex,useCardPlayerHandCardsNumber,
       // jackpot,preUseCardFee,tableCards
+
+      // todo 
+      // all player statusList can be changed
       const {
         useCardPlayerIndex,
         useCardPlayerHandCardsNumber,
@@ -850,6 +856,8 @@ export default {
           (obj) => obj.memberIndex == currentPlayerIndex
         );
         this.gameData.otherPlayerList[pIndex].status = status;
+        // todo 
+        // all player statusList can be changed
       }
     },
 
@@ -864,6 +872,8 @@ export default {
       const {
         jackpot,
         status,
+        playerStatus,
+        playerStatusList,
         currentRound,
         judgerCard,
         fateCard,
@@ -880,6 +890,8 @@ export default {
       this.gameData.currentRound = currentRound;
       this.gameData.judgerCard = judgerCard;
       this.gameData.fateCard = fateCard;
+      this.gameData.myInfos.status = playerStatus;
+      this.gameData.myInfos.statusList = playerStatusList;
       this.gameData.fightersInfo = fightersInfo.sort(function (a, b) {
         return parseFloat(a.id) - parseFloat(b.id);
       });
