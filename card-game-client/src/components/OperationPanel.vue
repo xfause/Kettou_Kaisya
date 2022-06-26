@@ -1,5 +1,7 @@
 <template>
-    <div class="operation_panel">
+    <div class="operation_panel"
+      v-if="memberIndex == currentPlayerIndex"
+    >
         <div
             v-if="roomStatus == `BET`"
         >

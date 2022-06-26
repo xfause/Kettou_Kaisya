@@ -10,3 +10,7 @@ prototype stage now
 * nodejs
 * express
 * mongodb （todo）
+
+nodemon app.js
+
+npm run serve  

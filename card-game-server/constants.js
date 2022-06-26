@@ -1,64 +1,35 @@
-// {
-//     id: 0,
-//     name: "xxxxxx",
-//     cardType: CardType.CHARACTER,
-//     cost: 3,
-//     content: `xxxxxxxxxx`,
-//     attack: 2,
-//     life: 1,
-//     attackBase: 2,
-//     lifeBase: 1,
-//     type: [""],
-//     isStrong: true,
-//     isFullOfEnergy: true,
-//     isDedication: true,
-//     onStart: function() {},
-//     onOtherCardStart: function() {},
-//     onMyTurnStart: function() {},
-//     onMyTurnEnd: function() {},
-//     onChooseTarget: function() {},
-//     onEnd: function() {},
-//     onTableCardChange: function() {},
-// }
+// return roomData
+// OnBetStageStart(roomData)
+// OnBetStageEnd(roomData)
+// OnCardStage(roomData)
+// OnJudgeStageStart(roomData)
+// OnJudgeStage(roomData)
+// OnJudgeStageEnd(roomData)
+// OnCalcStageStart(roomData)
+
+// return winnerFighterIndex
+// OnCalcStageEnd(roomNumber, tempRoomData)
 
 const JudgerList = [
   {
     id: 1,
     name: '老板的侄子',
     desc: "本回合裁判没有效果",
-    OnBetStage: function () {
-
-    },
-    OnCardStage: function () {
-
-    },
-    OnJudgeStage: function () {
-
-    },
-    OnCalcStage: function () {
-
+    //OnBetStage
+    //OnCardStage
+    //OnJudgeStage
+    OnCalcStageEnd: function (roomNumber, roomData) {
+      let winnerFighterIndex = 0;
+      let biggestHealth = -99999;
+      for (let i = 0; i < roomData.fightersInfo.length; i++){
+        if (roomData.fightersInfo[i].health > biggestHealth) {
+          winnerFighterIndex = i;
+          biggestHealth = roomData.fightersInfo[i].health;
+        }
+      }
+      return winnerFighterIndex;
     }
   },
-];
-
-const FateCardList = [
-  {
-    id: 1,
-    name: 'fate 1',
-    desc: "do nothing",
-    OnBetStage: function () {
-
-    },
-    OnCardStage: function () {
-
-    },
-    OnJudgeStage: function () {
-
-    },
-    OnCalcStage: function () {
-
-    }
-  }
 ];
 
 // type
@@ -149,6 +120,5 @@ const FighterList = [{
 module.exports = {
   Fighters: FighterList,
   Judgers: JudgerList,
-  FateCards: FateCardList,
   FighterStatusList: FighterStatusList,
 }

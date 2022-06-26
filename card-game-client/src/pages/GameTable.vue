@@ -33,9 +33,10 @@
 
       <div class="table_area">
         <div class="fate_judger_area">
-          <JudgerCard :judgerCard="gameData.judgerCard" />
-
-          <FateCard :fateCard="gameData.fateCard" />
+          <JudgerCard 
+            :judgerCard="gameData.judgerCard"
+            :status="gameData.status" 
+          />
         </div>
 
         <transition-group
@@ -53,6 +54,7 @@
             :status="gameData.myInfos.status"
             :roomStatus="gameData.status"
             :memberIndex="gameData.memberIndex"
+            :currentPlayerIndex="gameData.currentPlayerIndex"
             :roomNumber="gameData.roomNumber"
             :fighterStatusList="gameData.fighterStatusList"
             :money="gameData.myInfos.money"
@@ -147,7 +149,6 @@ import MyBasicInfo from "../components/MyBasicInfo";
 import OtherPlayerInfo from "../components/OtherPlayerInfo";
 import RemainCards from "../components/RemainCards";
 import JudgerCard from "../components/JudgerCard";
-import FateCard from "../components/FateCard";
 import FighterCard from "../components/FighterCard";
 import Card from "../components/Card";
 import TableCard from "../components/TableCard";
@@ -163,7 +164,6 @@ export default {
     Card,
     TableCard,
     JudgerCard,
-    FateCard,
     FighterCard,
   },
 
@@ -201,11 +201,10 @@ export default {
         roundNumLimit: 0,
         currentPlayerIndex: -1,
         judgerCard: null,
-        fateCard: null,
 
         currentTableCardIndex: -1,
 
-        winnerFighterIndex: -1,
+        winnerFighterId: -1,
         // 玩家下注给几号fighter 下注了多少钱
         betInfos: [],
         fightersInfo: [],
@@ -313,9 +312,14 @@ export default {
       this.OnJudgeStageActiveCard(result);
     });
 
-    // get winner fighter index
-    this.sockets.subscribe("WINNER_FIGHTER", (result) => {
+    // get winner fighter id
+    this.sockets.subscribe("WINNER_FIGHTER_ID", (result) => {
       this.GetWinnerFighter(result);
+    });
+
+    // get win money
+    this.sockets.subscribe("WIN_MONEY", (result) => {
+      this.ShowWinMoney(result);
     });
 
     // after all rounds game end
@@ -622,7 +626,6 @@ export default {
         checkCardFee,
         currentPlayerIndex,
         judgerCard,
-        fateCard,
         fightersInfo,
         tableCards,
         preUseCardFee,
@@ -640,7 +643,6 @@ export default {
       this.gameData.checkCardFee = checkCardFee;
       this.gameData.currentPlayerIndex = currentPlayerIndex;
       this.gameData.judgerCard = judgerCard;
-      this.gameData.fateCard = fateCard;
       this.gameData.fightersInfo = fightersInfo.sort(function (a, b) {
         return parseFloat(a.id) - parseFloat(b.id);
       });
@@ -667,7 +669,6 @@ export default {
         roomNumber,
         currentPlayerIndex,
         judgerCard,
-        fateCard,
         fightersInfo,
         tableCards,
         preUseCardFee,
@@ -686,10 +687,10 @@ export default {
       this.gameData.checkCardFee = checkCardFee;
       this.gameData.currentPlayerIndex = currentPlayerIndex;
       this.gameData.judgerCard = judgerCard;
-      this.gameData.fateCard = fateCard;
       this.gameData.fightersInfo = fightersInfo.sort(function (a, b) {
         return parseFloat(a.id) - parseFloat(b.id);
       });
+      this.gameData.betInfos = [];
       this.gameData.tableCards = tableCards;
       this.gameData.preUseCardFee = preUseCardFee;
       this.gameData.preUseCardPlayerIndex = preUseCardPlayerIndex;
@@ -738,9 +739,9 @@ export default {
       const { status } = result;
       this.gameData.status = status;
       if (status == "CARD") {
-        const { fateCard, playerStatus } = result;
-        this.gameData.fateCard = fateCard;
+        const { playerStatus, currentPlayerIndex } = result;
         this.gameData.myInfos.status = playerStatus;
+        this.gameData.currentPlayerIndex = currentPlayerIndex;
       } else if (status == "JUDGE") {
         const { playerStatus } = result;
         this.gameData.myInfos.status = playerStatus;
@@ -789,17 +790,20 @@ export default {
     OnPlayerFoldCard(result) {
       // preFoldPlayerIndex,currentPlayerIndex
       const { preFoldPlayerIndex, currentPlayerIndex, playerStatus } = result;
-      let pIndex = this.gameData.otherPlayerList.findIndex(
-        (obj) => obj.memberIndex == preFoldPlayerIndex
-      );
-      this.gameData.otherPlayerList[pIndex].status = "FOLDED";
+      
+      if (preFoldPlayerIndex != this.gameData.memberIndex){
+        let pIndex = this.gameData.otherPlayerList.findIndex(
+          (obj) => obj.memberIndex == preFoldPlayerIndex
+        );
+        this.gameData.otherPlayerList[pIndex].status = "FOLDED";
+      }
       this.gameData.currentPlayerIndex = currentPlayerIndex;
       this.gameData.myInfos.status = playerStatus;
     },
 
     OnMyUseCard(result) {
       // tableCards, handCards, jackpot, status, statusList
-      const { tableCards, handCards, jackpot, status, fightersInfo } = result;
+      const { tableCards, handCards, jackpot, status, fightersInfo, money } = result;
       this.gameData.tableCards = tableCards;
       // todo 
       // all player statusList can be changed
@@ -807,6 +811,7 @@ export default {
         this.gameData.myInfos = { status };
       } else {
         this.gameData.myInfos.status = status;
+        this.gameData.myInfos.money = money;
       }
       this.gameData.handCards = handCards.sort(function (a, b) {
         return parseFloat(a.id) - parseFloat(b.id);
@@ -827,6 +832,7 @@ export default {
         useCardPlayerIndex,
         useCardPlayerHandCardsNumber,
         useCardPlayerStatus,
+        useCardPlayerMoney,
         jackpot,
         preUseCardFee,
         tableCards,
@@ -839,6 +845,7 @@ export default {
         (obj) => obj.memberIndex == useCardPlayerIndex
       );
       this.gameData.otherPlayerList[pIndex].status = useCardPlayerStatus;
+      this.gameData.otherPlayerList[pIndex].money = useCardPlayerMoney;
       this.gameData.otherPlayerList[pIndex].handCardsNum = useCardPlayerHandCardsNumber;
       this.gameData.fightersInfo = fightersInfo.sort(function (a, b) {
         return parseFloat(a.id) - parseFloat(b.id);
@@ -876,7 +883,6 @@ export default {
         playerStatusList,
         currentRound,
         judgerCard,
-        fateCard,
         fightersInfo,
         tableCards,
         // preUseCardFee, preUseCardPlayerIndex, currentPlayerIndex,
@@ -889,7 +895,6 @@ export default {
       this.gameData.status = status;
       this.gameData.currentRound = currentRound;
       this.gameData.judgerCard = judgerCard;
-      this.gameData.fateCard = fateCard;
       this.gameData.myInfos.status = playerStatus;
       this.gameData.myInfos.statusList = playerStatusList;
       this.gameData.fightersInfo = fightersInfo.sort(function (a, b) {
@@ -905,8 +910,9 @@ export default {
     },
 
     GetWinnerFighter(result) {
-      // winnerFighterIndex
-      this.gameData.winnerFighterIndex = result.winnerFighterIndex;
+      // winnerFighterId
+      this.gameData.winnerFighterId = result.winnerFighterId;
+      this.ShowWinnerFighterNotice(this.gameData.winnerFighterId, this.gameData.fightersInfo)
     },
 
     OnGameEnd(result) {
@@ -924,6 +930,22 @@ export default {
       });
       return res;
     },
+
+    ShowWinnerFighterNotice(id, fighters){
+      let idx = fighters.findIndex((obj => obj.id == id));
+      let str = "角斗士ID:"+fighters[idx].id + "\n" +
+                "角斗士名称:"+fighters[idx].name; 
+      this.$alert(str, '获胜角斗士', {
+          confirmButtonText: '确定'
+        });
+    },
+
+    ShowWinMoney(result){
+      this.$alert(result.winMoney, '本轮获得', {
+          confirmButtonText: '确定'
+        });
+    }
+
   },
 };
 </script>

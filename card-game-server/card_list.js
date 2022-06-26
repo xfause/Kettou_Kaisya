@@ -40,6 +40,108 @@ const CHANGE_TEMPLATE = {
   otherPlayerMinusStatus: [],
 }
 
+const TestCardList = [
+  {
+    id: 1,
+    name: "初级过载",
+    type: "HIT",
+    desc: "+5 +3",
+    needTarget: true,
+    targetType: "fighter",
+    targetId: -1,
+    OnCardUse: function (roomData, needTarget, targetType, targetId, userIndex) {
+      if (needTarget) {
+        if (targetType == "fighter") {
+          let fIndex = roomData["fightersInfo"].findIndex((obj => obj.id == targetId));
+          let changes = { ...CHANGE_TEMPLATE };
+          changes.health = 5;
+          changes.magic = 3;
+          changes.cardType = "HIT";
+          changes = CheckFighterStatus(changes, roomData, fIndex, userIndex);
+          roomData["fightersInfo"][fIndex].health += changes.health;
+          roomData["fightersInfo"][fIndex].magic += changes.magic;
+          roomData = ChangeStatusList(roomData, changes, fIndex, userIndex);
+        }
+      }
+      return roomData;
+    },
+  }, {
+    id: 2,
+    name: "初级冷却",
+    type: "HIT",
+    desc: "+0 -5",
+    needTarget: true,
+    targetType: "fighter",
+    targetId: -1,
+    OnCardUse: function (roomData, needTarget, targetType, targetId, userIndex) {
+      if (needTarget) {
+        if (targetType == "fighter") {
+          let fIndex = roomData["fightersInfo"].findIndex((obj => obj.id == targetId));
+          let changes = { ...CHANGE_TEMPLATE };
+          changes.health = 0;
+          changes.magic = -5;
+          changes.cardType = "HIT";
+          changes = CheckFighterStatus(changes, roomData, fIndex, userIndex);
+          roomData["fightersInfo"][fIndex].health += changes.health;
+          roomData["fightersInfo"][fIndex].magic += changes.magic;
+          roomData = ChangeStatusList(roomData, changes, fIndex, userIndex);
+        }
+      }
+      return roomData;
+    },
+  }, {
+    id: 3,
+    name: "预热",
+    type: "HIT",
+    desc: "+2 +0 本回合内下一张卡牌效果+2/+1",
+    needTarget: true,
+    targetType: "fighter",
+    targetId: -1,
+    OnCardUse: function (roomData, needTarget, targetType, targetId, userIndex) {
+      if (needTarget) {
+        if (targetType == "fighter") {
+          let fIndex = roomData["fightersInfo"].findIndex((obj => obj.id == targetId));
+          let changes = { ...CHANGE_TEMPLATE };
+          changes.health = 2;
+          changes.magic = 0;
+          changes.cardType = "HIT";
+          changes.userAddStatus = ["WARM_UP"];
+          changes = CheckFighterStatus(changes, roomData, fIndex, userIndex);
+          roomData["fightersInfo"][fIndex].health += changes.health;
+          roomData["fightersInfo"][fIndex].magic += changes.magic;
+          roomData = ChangeStatusList(roomData, changes, fIndex, userIndex);
+        }
+      }
+      return roomData;
+    },
+  }, {
+    id: 4,
+    name: "信号增强",
+    type: "EFFECT",
+    desc: "+1 +0 在该卡牌生效后,指定角斗士接下来两次生命值/法力值变化+2/+0",
+    needTarget: true,
+    targetType: "fighter",
+    targetId: -1,
+    OnCardUse: function (roomData, needTarget, targetType, targetId, userIndex) {
+      if (needTarget) {
+        if (targetType == "fighter") {
+          let fIndex = roomData["fightersInfo"].findIndex((obj => obj.id == targetId));
+          let changes = { ...CHANGE_TEMPLATE };
+          changes.health = 1;
+          changes.magic = 0;
+          changes.cardType = "EFFECT";
+          changes.addStatus = ["STRENGTHEN_TWICE", "STRENGTHEN_TWICE"];
+          changes = CheckFighterStatus(changes, roomData, fIndex, userIndex);
+          roomData["fightersInfo"][fIndex].health += changes.health;
+          roomData["fightersInfo"][fIndex].magic += changes.magic;
+          roomData = ChangeStatusList(roomData, changes, fIndex, userIndex);
+        }
+      }
+      return roomData;
+    },
+  }
+]
+
 const CardList = [
   {
     id: 1,
@@ -395,6 +497,7 @@ function CheckFighterStatus(changes, roomData, fighteIndex, userIndex) {
       return fChanges;
     }
   }
+
   if (fighterStatusList.includes("HALF_MAGIC")) {
     fChanges.magic = fChanges.magic / 2;
   }
@@ -407,5 +510,6 @@ function CheckFighterStatus(changes, roomData, fighteIndex, userIndex) {
 }
 
 module.exports = {
-  Cards: CardList,
+  // Cards: CardList,
+  Cards: TestCardList,
 }

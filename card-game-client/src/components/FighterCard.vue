@@ -35,7 +35,7 @@
             "
           >
             <el-button
-              v-if="!this.showMoneyInput"
+              v-if="!this.showMoneyInput && memberIndex == currentPlayerIndex"
               @click="this.OnShowMoneyInput"
             >
               下注
@@ -82,6 +82,7 @@ export default {
     roomStatus: String, // room status
     money: Number,
     memberIndex: Number,
+    currentPlayerIndex: Number,
     roomNumber: String,
     betInfos: Array,
     fighterBetInfos: Array,
@@ -196,7 +197,6 @@ export default {
     },
     betedOnThisFighter() {
       let res = false;
-
       if (this.betInfos) {
         this.betInfos.map((b) => {
           if (b.fighterId == this.id) {
