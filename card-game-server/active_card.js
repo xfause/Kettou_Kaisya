@@ -7,14 +7,9 @@ function OnUseStageActiveCard(card, roomData, needTarget, targetType, targetId, 
 
   let tempRoomData = roomData;
 
-  // if judger card have OnCardStage method
-  if (tempRoomData.judgerCard.OnCardStage != null) {
-    tempRoomData = tempRoomData.judgerCard.OnCardStage(tempRoomData);
-  }
-
   // OnOtherCardUseStart
   for (let c in tempRoomData.tableCards) {
-    if (c.OnOtherCardUseStart !== null && c.OnOtherCardUseStart !== undefined) {
+    if (c.OnOtherCardUseStart !== null && c.OnOtherCardUseStart !== undefined && c.isActive == true) {
       tempRoomData = c.OnOtherCardUseStart(tempRoomData, needTarget, targetType, targetId, userIndex) 
     }
   }
@@ -22,20 +17,21 @@ function OnUseStageActiveCard(card, roomData, needTarget, targetType, targetId, 
   // use current card
   if (card.OnCardUse !== null && card.OnCardUse !== undefined) {
     // if is effect card, it will use in judge stage
-    if (card.type == "EFFECT") {
-      if (tempRoomData.status == "JUDGE") {
-        tempRoomData = card.OnCardUse(tempRoomData, needTarget, targetType, targetId, userIndex)
-      }
-    } else {
+    if (card.type == "HIT") {
       tempRoomData = card.OnCardUse(tempRoomData, needTarget, targetType, targetId, userIndex)
-    }
+    } 
   }
 
   // OnOtherCardUseEnd
   for (let c in tempRoomData.tableCards) {
-    if (c.OnOtherCardUseEnd !== null && c.OnOtherCardUseEnd !== undefined) {
+    if (c.OnOtherCardUseEnd !== null && c.OnOtherCardUseEnd !== undefined && c.isActive == true) {
       tempRoomData = c.OnOtherCardUseEnd(tempRoomData, needTarget, targetType, targetId, userIndex) 
     }
+  }
+
+  // if judger card have OnCardStage method
+  if (tempRoomData.judgerCard.OnCardStage != null) {
+    tempRoomData = tempRoomData.judgerCard.OnCardStage(tempRoomData);
   }
 
   return tempRoomData;
@@ -48,19 +44,22 @@ function OnJudgeStageActiveCard(card, roomData) {
 
   // OnOtherCardUseStart
   for (let c in tempRoomData.tableCards) {
-    if (c.OnOtherCardUseStart !== null && c.OnOtherCardUseStart !== undefined) {
+    if (c.OnOtherCardUseStart !== null && c.OnOtherCardUseStart !== undefined && c.isActive == true) {
       tempRoomData = c.OnOtherCardUseStart(tempRoomData, needTarget, targetType, targetId, userIndex) 
     }
   }
 
   // use current card
   if (card.OnCardUse !== null && card.OnCardUse !== undefined) {
-    tempRoomData = card.OnCardUse(tempRoomData, needTarget, targetType, targetId, userIndex)
+    tempRoomData = card.OnCardUse(tempRoomData, needTarget, targetType, targetId, userIndex);
+
+    let cIndex = tempRoomData.tableCards.findIndex(obj => obj.id == card.id);
+    tempRoomData.tableCards[cIndex].isActive = true;
   }
 
   // OnOtherCardUseEnd
   for (let c in tempRoomData.tableCards) {
-    if (c.OnOtherCardUseEnd !== null && c.OnOtherCardUseEnd !== undefined) {
+    if (c.OnOtherCardUseEnd !== null && c.OnOtherCardUseEnd !== undefined && c.isActive == true) {
       tempRoomData = c.OnOtherCardUseEnd(tempRoomData, needTarget, targetType, targetId, userIndex) 
     }
   }

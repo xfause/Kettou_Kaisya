@@ -22,7 +22,8 @@ const waitPairQueue = []; // 等待排序的队列
 const memoryData = {}; // 缓存的房间游戏数据，key => 房间号，value => 游戏数据
 const existUserGameRoomMap = {}; // 缓存用户的房间号， key => 用户标识，value => 房间号
 const roomPlayerLimit = 1;
-const roundNumLimit = 4;
+const roundNumLimit = 2;
+const handCardsNumLimit = 10;
 const fighterNumLimit = 4;
 const checkCardFee = 50;
 
@@ -365,6 +366,7 @@ function OnEndBetFighters(args, socket) {
   memoryData[roomNumber]["usersList"].map(p => {
     p.socket.emit("AFTER_BET_DATA", {
       fightersInfo: memoryData[roomNumber]["fightersInfo"],
+      jackpot: memoryData[roomNumber].jackpot,
       playerBetStatus: memoryData[roomNumber]["usersList"].map(o => {
         return {
           status: o.status,
@@ -410,6 +412,8 @@ function OnBetFighters(args, socket) {
   // let roomNumber = args.roomNumber, fighterId = args.fighterId, memberIndex = args.memberIndex;
   let { roomNumber, fighterId, memberIndex, betMoney } = args;
 
+  memoryData[roomNumber].jackpot += betMoney;
+
   // change memory data
   let currUserIndex = memoryData[roomNumber]["usersList"].findIndex((obj => obj.memberIndex == memberIndex));
   if (memoryData[roomNumber]["usersList"][currUserIndex].betInfos.length == 3) {
@@ -434,6 +438,7 @@ function OnBetFighters(args, socket) {
   memoryData[roomNumber]["usersList"].map(p => {
     p.socket.emit("AFTER_BET_DATA", {
       fightersInfo: memoryData[roomNumber]["fightersInfo"],
+      jackpot: memoryData[roomNumber].jackpot,
       playerBetStatus: memoryData[roomNumber]["usersList"].map(o => {
         return {
           status: o.status,
@@ -477,6 +482,15 @@ function OnCheckCard(args, socket) {
   // 操作的合法性判断
 
   let currUserIndex = memoryData[roomNumber]["usersList"].findIndex((obj => obj.memberIndex == memberIndex));
+
+  // 如果手牌数超过限制
+  if (memoryData[roomNumber]["usersList"][currUserIndex].handCards.length >= handCardsNumLimit) {
+    socket.emit("OUT_HAND_CARDS_NUM", {
+      
+    })
+    return;
+  }
+
   if (memoryData[roomNumber]["usersList"][currUserIndex].money < checkCardFee) {
     return;
   }
@@ -588,11 +602,19 @@ function OnUseCard(args, socket) {
         ...card
       };
       t.targetId = targetId;
-      memoryData[roomNumber].tableCards.push({...t, userIndex: currUserIndex});
+      memoryData[roomNumber].tableCards.push({
+        ...t,
+        userIndex: currUserIndex,
+        isActive: t.type == "HIT"? true: false
+      });
       let tempRoomData = OnUseStageActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId, currUserIndex);
       memoryData[roomNumber] = { ...tempRoomData };
     } else {
-      memoryData[roomNumber].tableCards.push({...card, userIndex: currUserIndex});
+      memoryData[roomNumber].tableCards.push({
+        ...card,
+        userIndex: currUserIndex,
+        isActive: t.type == "HIT"? true: false
+      });
       let tempRoomData = OnUseStageActiveCard(card, memoryData[roomNumber], needTarget, targetType, targetId, currUserIndex);
       memoryData[roomNumber] = { ...tempRoomData };
     }
@@ -671,7 +693,8 @@ function JudgeTableCards(roomNumber) {
   // active card
   memoryData[roomNumber].tableCards.map((card, index) => {
 
-    OnJudgeStageActiveCard(card, memoryData[roomNumber]);
+    let tempRoomData = OnJudgeStageActiveCard(card, memoryData[roomNumber]);
+    memoryData[roomNumber] = { ...tempRoomData };
 
     memoryData[roomNumber].usersList.map(p => {
 
@@ -758,6 +781,7 @@ function CalcWinnerFighter(roomNumber, roomData) {
   CalcJackpot(roomNumber, tempRoomData, winnerFighterIndex);
   // new round
   InitNewRound(roomNumber, tempRoomData);
+
 }
 
 function CalcJackpot(roomNumber, roomData, winnerFighterIndex) {
@@ -765,16 +789,20 @@ function CalcJackpot(roomNumber, roomData, winnerFighterIndex) {
   let winnerFighterId = roomData.fightersInfo[winnerFighterIndex].id;
 
   let betRightPlayerList = []
+  let tmpBetWinMoney = 0;
   // bet money
   roomData.usersList.map(p => {
     let betOnWinnerIndex = p.betInfos.findIndex(obj => obj.fighterId == winnerFighterId);
     if (betOnWinnerIndex >= 0) {
       if (p.betInfos.length == 3) {
-        p.money += 1.0 * p.betInfos[betOnWinnerIndex].betMoney * roomData.fightersInfo[winnerFighterIndex].magnification;
+        tmpBetWinMoney = 1.0 * p.betInfos[betOnWinnerIndex].betMoney * roomData.fightersInfo[winnerFighterIndex].magnification;
+        p.money += tmpBetWinMoney;
       } else if (p.betInfos.length == 2) {
-        p.money += 1.5 * p.betInfos[betOnWinnerIndex].betMoney * roomData.fightersInfo[winnerFighterIndex].magnification;
+        tmpBetWinMoney = 1.5 * p.betInfos[betOnWinnerIndex].betMoney * roomData.fightersInfo[winnerFighterIndex].magnification;
+        p.money += tmpBetWinMoney;
       } else if (p.betInfos.length == 1) {
-        p.money += 2.0 * p.betInfos[betOnWinnerIndex].betMoney * roomData.fightersInfo[winnerFighterIndex].magnification;
+        tmpBetWinMoney = 2.0 * p.betInfos[betOnWinnerIndex].betMoney * roomData.fightersInfo[winnerFighterIndex].magnification;
+        p.money += tmpBetWinMoney;
       }
       betRightPlayerList.push({
         memberIndex: p.memberIndex,
@@ -795,11 +823,11 @@ function CalcJackpot(roomNumber, roomData, winnerFighterIndex) {
   });
   betRightPlayerList.map(p => {
     let playerIndex = roomData.usersList.findIndex(obj => obj.memberIndex == p.memberIndex);
-    let tmpMoney = roomData.jackpot / totalNumber * p.number;
-    roomData.usersList[playerIndex].money += tmpMoney
+    let tmpJackpotWinMoney = roomData.jackpot / totalNumber * p.number;
+    roomData.usersList[playerIndex].money += tmpJackpotWinMoney;
 
     p.socket.emit("WIN_MONEY", {
-      winMoney: tmpMoney
+      winMoney: tmpJackpotWinMoney + tmpBetWinMoney
     });
 
   });
@@ -808,13 +836,25 @@ function CalcJackpot(roomNumber, roomData, winnerFighterIndex) {
 function InitNewRound(roomNumber, roomData) {
   // last round game end
   if (roomData.currentRound == roundNumLimit) {
-    roomData.usersList.sort(function (a, b) {
+    let tmpRankList = [...roomData.usersList];
+
+    tmpRankList.sort((a, b)=>{
       return parseFloat(a.money) - parseFloat(b.money);
     });
+
+    let rankList = [];
+    tmpRankList.map((o, index) => {
+      rankList.push({
+        rank: index + 1,
+        money: o.money,
+        memberIndex: o.memberIndex
+      })
+    })
+
     roomData.usersList.map(p => {
       p.socket.emit("GAME_END", {
         // game end
-        rankList: roomData.usersList
+        rankList
       });
     })
   } else {
@@ -860,6 +900,7 @@ function InitNewRound(roomNumber, roomData) {
     roomData.usersList.map(u => {
       u.status = "NOT_BETED";
       u.betInfos = [];
+      u.money += 500;
 
       // get hand cards;
       u.handCards = [];

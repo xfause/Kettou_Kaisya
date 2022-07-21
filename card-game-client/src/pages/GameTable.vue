@@ -152,6 +152,7 @@ import JudgerCard from "../components/JudgerCard";
 import FighterCard from "../components/FighterCard";
 import Card from "../components/Card";
 import TableCard from "../components/TableCard";
+import RankList from "../components/RankList"
 import Velocity from "velocity-animate";
 
 export default {
@@ -182,9 +183,6 @@ export default {
       // for use card
       // temp variable
       currentChosenHandCardId: -1,
-
-      // show rank list
-      showRankList: false,
 
       gameData: {
         memberIndex: -1,
@@ -270,6 +268,10 @@ export default {
     // change room stage
     this.sockets.subscribe("CHANGE_ROOM_STAGE", (result) => {
       this.OnChangeRoomStage(result);
+    });
+
+    this.sockets.subscribe("OUT_HAND_CARDS_NUM", (result) => {
+      this.OnOutHandCardsCheck(result);
     });
 
     // my check card
@@ -706,14 +708,17 @@ export default {
     OnPlayerBetFighters(result) {
       // playerBetStatus:{
       //     status, statusList, memberIndex
-      //     userId, money,
+      //     userId, money, jackpot
       //     betInfos
       //     currentPlayerIndex
       // }
-      const { fightersInfo, playerBetStatus } = result;
+      const { fightersInfo, playerBetStatus, jackpot } = result;
+
       this.gameData.fightersInfo = fightersInfo.sort(function (a, b) {
         return parseFloat(a.id) - parseFloat(b.id);
       });
+
+      this.gameData.jackpot = jackpot;
 
       playerBetStatus.map((p) => {
         if (p.memberIndex == this.gameData.memberIndex) {
@@ -915,10 +920,19 @@ export default {
       this.ShowWinnerFighterNotice(this.gameData.winnerFighterId, this.gameData.fightersInfo)
     },
 
+    // eslint-disable-next-line
+    OnOutHandCardsCheck(result){
+      this.ShowOutHandCardsNotice();
+    },
+
     OnGameEnd(result) {
       // rankList
-      this.showRankList = true;
       this.gameData.rankList = result.rankList;
+      this.$msgbox({
+        title: "本局排名",
+        message: <RankList ref="RankList"/>,
+        data: this.gameData.rankList
+      })
     },
 
     GetFighterBetInfos(id) {
@@ -936,6 +950,12 @@ export default {
       let str = "角斗士ID:"+fighters[idx].id + "\n" +
                 "角斗士名称:"+fighters[idx].name; 
       this.$alert(str, '获胜角斗士', {
+          confirmButtonText: '确定'
+        });
+    },
+
+    ShowOutHandCardsNotice(){
+      this.$alert("手牌数已达上限，无法过牌", '提示', {
           confirmButtonText: '确定'
         });
     },
