@@ -1,0 +1,151 @@
+.app {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    user-select: none;
+  }
+  
+  .table {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .match-dialog-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+  }
+  
+  .top_area {
+    width: 100%;
+    height: 20%;
+  }
+  
+  .room_info_area {
+    width: 40%;
+    height: 100%;
+    background-color: rgb(251, 84, 84);
+    float: right;
+  }
+  
+  .other_player_area {
+    width: 60%;
+    height: 100%;
+    display: flex;
+    padding: 10px;
+    justify-content: flex-start;
+    box-sizing: border-box;
+    flex-wrap: nowrap;
+    background-color: #00f;
+    float: left;
+    column-gap: 10px;
+    overflow-x: scroll;   
+  }
+  
+  .my_area {
+    width: 100%;
+    height: 25%;
+    min-height: 170px;
+    position: absolute;
+    bottom: 0px;
+    /* display: flex; */
+    padding: 10px;
+    box-sizing: border-box;
+    /* justify-content: center; */
+    background-color: #0f0;
+  }
+  
+  .my_basic_info {
+    background-color: grey;
+    width: 200px;
+    height: 100%;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+  }
+  
+  .my_remain_cards_info {
+    background-color: grey;
+    width: 200px;
+    height: 100%;
+    position: absolute;
+    right: 0px;
+    top: 0px;
+  }
+  
+  .my_hand_cards {
+    height: 100%;
+    margin-left: 200px;
+    margin-right: 200px;
+    background-color: white;
+    display: flex;
+    padding: 10px;
+    justify-content: flex-start;
+    box-sizing: border-box;
+    flex-wrap: nowrap;
+    column-gap: 10px;
+    row-gap: 10px;
+    /* overflow-x: scroll;    */
+  }
+  
+  .table_area {
+    background-color: rgb(31, 255, 255);
+    height: 55%;
+    width: 100%;
+  }
+  
+  .fate_judger_area {
+    background-color: rgb(109, 58, 250);
+    width: 12.5%;
+    height: 100%;
+    float: left;
+  }
+  
+  .fighters_area {
+    background-color: rgb(250, 58, 250);
+    height: 100%;
+    margin-left: 12.5%;
+    margin-right: 55%;
+    display: flex;
+    padding: 10px;
+    justify-content: flex-start;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    column-gap: 10px;
+    row-gap: 10px;
+    overflow-y: scroll;   
+  }
+  
+  .table_cards_area {
+    background-color: rgb(215, 250, 58);
+    width: 55%;
+    position: absolute;
+    right: 0px;
+    top: 20%;
+    height: 55%;
+    display: flex;
+    padding: 10px;
+    justify-content: flex-start;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    column-gap: 10px;
+    row-gap: 10px;
+    overflow-y: scroll;   
+  }
+  
+  #animationCanvas {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 999;
+  }

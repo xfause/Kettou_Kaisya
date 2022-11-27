@@ -1,0 +1,107 @@
+.container {
+    height: 100%;
+    display: flex;
+}
+.login-container {
+    flex: 1;
+    max-width: 500px;
+    border: 0;
+    padding: 80px 100px;
+    display: flex;
+    flex-direction: column;
+    box-shadow:-13px 14px 131px #D8CBBB;
+    align-items: center;
+    justify-content: center;
+}
+.screen {
+    display: flex;
+    flex: 1;
+    color: white;
+    background: linear-gradient(to right, rgba(36,31,31,1) 0%, rgba(36,31,31,1) 32%, rgba(74,71,70,1) 100%);
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    font-size: 35px;
+    position: relative;
+}
+
+.title-content{ 
+	position:relative; 
+	width: 80%;
+    height: 500px; 
+}
+.main-title {
+    width: 370px;
+    height: 500px;
+    padding: .3em 1em .25em;    
+    font-weight: 400;
+    font-size: 80px;
+    color: white;
+    position:relative;
+    line-height:1.3;
+    position:absolute;
+    top:0;
+    left:50%;
+    transform: translate(-50%, 0%);
+}
+
+.main-title2 {
+    transform: translate(-50%, 0%);
+}
+
+.noise {
+    position: absolute;
+    z-index: 100;
+    top: 0;
+    left: 0;
+    
+    width: 100%;
+    height: 100%;
+
+    pointer-events: none;
+    opacity: .15;
+}
+
+.vignette{
+    position:absolute;
+    width:100%; height:100%;
+    box-shadow:inset 0px 0px 150px 20px black;
+    mix-blend-mode: multiply;
+    -webkit-animation: vignette-anim 3s infinite; /* Safari 4+ */
+    -moz-animation:    vignette-anim 3s infinite; /* Fx 5+ */
+    -o-animation:      vignette-anim 3s infinite; /* Opera 12+ */
+    animation:         vignette-anim 3s infinite; /* IE 10+, Fx 29+ */
+}
+
+.dot{
+    width:3px;
+    height:2px;
+    background-color:white;
+    position:absolute;
+    opacity:0.3;
+}
+
+.line {
+    position:absolute;
+    height:100%; width:1px;
+    opacity:0.1;
+    background-color:#000;
+}
+
+
+@-webkit-keyframes vignette-anim {
+    0%   , 100%{ opacity: 1; }
+    50% { opacity: 0.7; }
+}
+@-moz-keyframes vignette-anim {
+    0%   , 100%{ opacity: 1; }
+    50% { opacity: 0.7; }
+}
+@-o-keyframes vignette-anim {
+    0%   , 100%{ opacity: 1; }
+    50% { opacity: 0.7; }
+}
+@keyframes vignette-anim {
+    0%   , 100%{ opacity: 1; }
+    50% { opacity: 0.7; }
+}
