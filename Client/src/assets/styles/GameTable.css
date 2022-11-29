@@ -102,14 +102,14 @@
     width: 100%;
   }
   
-  .fate_judger_area {
+  .judger_card_area {
     background-color: rgb(109, 58, 250);
     width: 12.5%;
     height: 100%;
     float: left;
   }
   
-  .fighters_area {
+  .fighter_list_area {
     background-color: rgb(250, 58, 250);
     height: 100%;
     margin-left: 12.5%;

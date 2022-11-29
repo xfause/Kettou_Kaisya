@@ -31,7 +31,7 @@ export default {
             } else if (this.CurrentStage == "CALC") {
                 return "结算"
             }
-            return "";
+            return "N/A";
         }
     }
 }

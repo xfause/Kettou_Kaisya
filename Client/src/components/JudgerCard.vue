@@ -1,18 +1,18 @@
 <template>
   <div class="judger_card">
-    <div v-if="this.judgerCard !== null">
-      <div v-if="this.status == 'PREPARE' || this.status == 'BET'">
+    <div v-if="this.JudgerCard !== null">
+      <div v-if="this.CurrentStage == 'PREPARE' || this.CurrentStage == 'BET'">
         <div>裁判卡</div>
         <div>背面</div>
       </div>
       <div v-else>
         <div>裁判卡</div>
-        <div>id:{{ id }}</div>
-        <div>name:{{ name }}</div>
+        <div>ID:{{ id }}</div>
+        <div>名称:{{ name }}</div>
         <div>描述:{{ desc }}</div>
       </div>
     </div>
-    <div v-if="this.judgerCard == null">
+    <div v-if="this.JudgerCard == null">
       <div>裁判卡</div>
       <div>空</div>
     </div>
@@ -23,30 +23,30 @@
 export default {
   name: "JudgerCard",
   props: {
-    judgerCard: Object, // judger infos
-    status: String,
+    JudgerCard: Object, // judger infos
+    CurrentStage: String,
   },
   data() {
     return {};
   },
   computed: {
     id() {
-      if (this.judgerCard) {
-        return this.judgerCard.id;
+      if (this.JudgerCard) {
+        return this.JudgerCard.Id;
       } else {
         return "N/A";
       }
     },
     name() {
-      if (this.judgerCard) {
-        return this.judgerCard.name;
+      if (this.JudgerCard) {
+        return this.JudgerCard.Name;
       } else {
         return "N/A";
       }
     },
     desc() {
-      if (this.judgerCard) {
-        return this.judgerCard.desc;
+      if (this.JudgerCard) {
+        return this.JudgerCard.Desc;
       } else {
         return "N/A";
       }
@@ -56,10 +56,5 @@ export default {
 </script>
 
 <style>
-.judger_card {
-  width: calc(100% - 40px);
-  height: calc(50% - 40px);
-  background-color: white;
-  margin: 20px;
-}
+  @import '../assets/styles/JudgerCard.css';
 </style>
