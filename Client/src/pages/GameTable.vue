@@ -2,41 +2,106 @@
     <div class="app">
         <div class="table">
             <div class="top_area">
-                <transition-group class="other_player_area" tag="div" :css="false" @enter="CustomMouseEnter"
-                    @before-enter="CustomBeforeMouseEnter" @after-enter="CustomAfterMouseEnter">
-                    <OtherPlayerInfo v-for="(p, pIdx) in GameData.OtherPlayerList" :key="p.Index" :index="pIdx"
-                        :TempCredit="p.TempCredit" :WinCredit="p.WinCredit" :PlayerIndex="p.Index"
-                        :HandCardsNum="p.HandCardsNum" :Status="p.Status" />
+                <transition-group 
+                    class="other_player_area" 
+                    tag="div" 
+                    :css="false" 
+                    @enter="CustomMouseEnter"
+                    @before-enter="CustomBeforeMouseEnter" 
+                    @after-enter="CustomAfterMouseEnter"
+                >
+                    <OtherPlayerInfo 
+                        v-for="(p, pIdx) in GameData.OtherPlayerList" 
+                        :key="p.Index" 
+                        :index="pIdx"
+                        :TempCredit="p.TempCredit" 
+                        :WinCredit="p.WinCredit" 
+                        :PlayerIndex="p.Index"
+                        :HandCardsNum="p.HandCardsNum" 
+                        :Status="p.Status"
+                    />
                 </transition-group>
 
                 <div class="room_info_area">
-                    <RoomInfo :CurrentRound="GameData.CurrentRound" :RoundNumLimit="GameData.RoundNumLimit"
-                        :PublicJackpot="GameData.PublicJackpot" :CurrentStage="GameData.CurrentStage" />
+                    <RoomInfo 
+                        :CurrentRound="GameData.CurrentRound" 
+                        :RoundNumLimit="GameData.RoundNumLimit"
+                        :PublicJackpot="GameData.PublicJackpot" 
+                        :CurrentStage="GameData.CurrentStage" 
+                    />
                 </div>
             </div>
 
             <div class="table_area">
                 <div class="judger_card_area">
-                    <JudgerCard :JudgerCard="GameData.JudgerCardInfo" :CurrentStage="GameData.CurrentStage" />
+                    <JudgerCard 
+                        :JudgerCard="GameData.JudgerCardInfo" 
+                        :CurrentStage="GameData.CurrentStage" 
+                    />
                 </div>
 
-                <transition-group class="fighter_list_area" tag="div" :css="false" @enter="CustomMouseEnter"
-                    @before-enter="CustomBeforeMouseEnter" @after-enter="CustomAfterMouseEnter">
-                    <FighterCard v-for="f in GameData.FighterInfoList" :key="f.Id" :index="f.Id" :data-id="f.Id"
-                        :PlayerStatus="GameData.MyInfos.Status" :GameCurrStage="GameData.CurrentStage"
-                        :PlayerIndex="GameData.Index" :CurrentPlayerIndex="GameData.CurrentPlayerIndex"
-                        :RoomNumber="GameData.RoomNumber" :FighterStatusList="GameData.FighterStatusList"
-                        :PlayerTempCredit="GameData.MyInfos.TempCredit" :BetDetails="GameData.BetDetails"
-                        :FighterBetDetails="GetFighterBetDetails(f.Id)" :Fighter="f" />
+                <transition-group 
+                    class="fighter_list_area" 
+                    tag="div" 
+                    :css="false" 
+                    @enter="CustomMouseEnter"
+                    @before-enter="CustomBeforeMouseEnter" 
+                    @after-enter="CustomAfterMouseEnter"
+                >
+                    <FighterCard 
+                        v-for="f in GameData.FighterInfoList" 
+                        :key="f.Id" 
+                        :index="f.Id" 
+                        :data-id="f.Id"
+                        :PlayerStatus="GameData.MyInfos.Status" 
+                        :GameCurrStage="GameData.CurrentStage"
+                        :PlayerIndex="GameData.Index" 
+                        :CurrentPlayerIndex="GameData.CurrentPlayerIndex"
+                        :RoomNumber="GameData.RoomNumber" 
+                        :FighterStatusList="GameData.FighterStatusList"
+                        :PlayerTempCredit="GameData.MyInfos.TempCredit" 
+                        :BetDetails="GameData.BetDetails"
+                        :FighterBetDetails="GetFighterBetDetails(f.Id)" 
+                        :Fighter="f" 
+                    />
                 </transition-group>
 
-                <transition-group class="table_cards_area" tag="div" :css="false" @enter="CustomMouseEnter"
-                    @before-enter="CustomBeforeMouseEnter" @after-enter="CustomAfterMouseEnter">
-                    <TableCard :key="card.k" :index="index" :data-id="index" :data="card"
-                        :CurrentStage="GameData.CurrentStage" :CurrentTableCardIndex="GameData.CurrTableCardIndex"
-                        :CardIndex="index" v-for="(card, index) in GameData.TableCardList" />
+                <transition-group 
+                    class="table_cards_area" 
+                    tag="div" 
+                    :css="false" 
+                    @enter="CustomMouseEnter"
+                    @before-enter="CustomBeforeMouseEnter" 
+                    @after-enter="CustomAfterMouseEnter"
+                >
+                    <TableCard 
+                        :key="card.k" 
+                        :index="index" 
+                        :data-id="index" 
+                        :data="card"
+                        :CurrentStage="GameData.CurrentStage" 
+                        :CurrentTableCardIndex="GameData.CurrTableCardIndex"
+                        :CardIndex="index" 
+                        v-for="(card, index) in GameData.TableCardList" 
+                    />
                 </transition-group>
+            </div>
 
+            <div class="player_area">
+                <div class="player_basic_info">
+                    <PlayerBasicInfo
+                        v-if="GameData.MyInfos"
+                        :PlayerIndex="GameData.MyInfos.Index"
+                        :Status="GameData.MyInfos.Status"
+                        :TempCredit="GameData.MyInfos.TempCredit"
+                        :WinCredit="GameData.MyInfos.WinCredit"
+                        :CurrentStage="GameData.CurrentStage"
+                        :BetDetails="GameData.BetDetails"
+                        :RoomNumber="GameData.RoomNumber"
+                        :CurrentPlayerIndex="GameData.CurrentPlayerIndex"
+                        :CheckCardCost="GameConfig.CheckCardCost"
+                    />
+                </div>
             </div>
 
             <div class="match-dialog-container" v-show="IsShowSearchMatchDialog">
@@ -57,6 +122,7 @@ import RoomInfo from "../components/RoomInfo.vue";
 import JudgerCard from "../components/JudgerCard.vue";
 import FighterCard from "../components/FighterCard.vue";
 import TableCard from "../components/TableCard.vue";
+import PlayerBasicInfo from "../components/PlayerBasicInfo.vue";
 
 export default {
     name: "GameTable",
@@ -65,7 +131,8 @@ export default {
         RoomInfo,
         JudgerCard,
         FighterCard,
-        TableCard
+        TableCard,
+        PlayerBasicInfo
     },
 
     data() {
@@ -79,6 +146,7 @@ export default {
             UserUid: new Date().getTime(),
             CurrChosenHandCardId: -1,
 
+            GameConfig: null,
             GameData: {
                 // 服务器数据
                 Index: -1,

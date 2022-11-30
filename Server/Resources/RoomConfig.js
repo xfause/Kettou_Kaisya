@@ -3,7 +3,7 @@ const NormalConfig = {
     HandCardCountLimit: 10,
     InitHandCardCount: 3,
     FighterCountLimit: 4,
-    PassCardFee: 100,
+    CheckCardCost: 100,
     UseCardFee: [200, 300, 400, 500],
     RoundLimit: 4,
     RoundInitCredit: 5000,

@@ -50,7 +50,7 @@
     overflow-x: scroll;   
   }
   
-  .my_area {
+  .player_area {
     width: 100%;
     height: 25%;
     min-height: 170px;
@@ -63,7 +63,7 @@
     background-color: #0f0;
   }
   
-  .my_basic_info {
+  .player_basic_info {
     background-color: grey;
     width: 200px;
     height: 100%;

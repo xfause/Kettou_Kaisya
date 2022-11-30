@@ -1,9 +1,9 @@
 <template>
     <div class="operation_panel"
-      v-if="memberIndex == currentPlayerIndex"
+      v-if="PlayerIndex == CurrentPlayerIndex"
     >
         <div
-            v-if="roomStatus == `BET`"
+            v-if="CurrentRoomStage == `BET`"
         >
             <el-button
                 @click="this.OnEndBetFighters"
@@ -14,9 +14,9 @@
 
         <div
             v-if="
-                roomStatus == `CARD` 
-                && currentPlayerIndex==memberIndex
-                && playerStatus != `FOLDED`
+                CurrentRoomStage == `CARD` 
+                && CurrentPlayerIndex==PlayerIndex
+                && PlayerStatus != `FOLDED`
                 "
         >
             <el-button
@@ -30,7 +30,7 @@
                 弃牌
             </el-button>
             <el-button
-                v-if="playerStatus == `PAID_USE_CARD`"
+                v-if="PlayerStatus == `PAID_USE_CARD`"
                 @click="this.OnClickEndUseCard"
             >
                 结束出牌
@@ -43,14 +43,14 @@
 export default {
     name: "OperationPanel",
     props: {
-        betInfos: Array, // bet infos
-        playerStatus: String,
-        roomStatus: String,
-        roomNumber: String,
-        memberIndex: Number,
-        currentPlayerIndex: Number,
-        checkCardFee: Number,
-        money: Number,
+        BetDetails: Array, // bet infos
+        PlayerStatus: String,
+        CurrentRoomStage: String,
+        RoomNumber: String,
+        PlayerIndex: Number,
+        CurrentPlayerIndex: Number,
+        TempCredit: Number,
+        CheckCardCost: Number,
     },
     data(){
         return {
@@ -58,7 +58,7 @@ export default {
     },
     methods:{
         OnEndBetFighters(){
-            if (this.betInfos.length <= 0) {
+            if (this.BetDetails.length <= 0) {
                 this.$message({
                     showClose: false,
                     message: '至少下注一名角斗士',
@@ -68,50 +68,47 @@ export default {
                 // change server data
                 this.$socket.emit("COMMAND",{
                     type:"END_BET_FIGHTERS",
-                    roomNumber: this.roomNumber,
-                    memberIndex: this.memberIndex
+                    RoomNumber: this.RoomNumber,
+                    PlayerIndex: this.PlayerIndex
                 });
             }
         },
         OnClickCheckCard(){
-            if (this.money < this.checkCardFee) {
+            if (this.TempCredit < this.CheckCardCost)
+            {
                 this.$message({
                     showClose: false,
                     message: '剩余金钱小于过牌所需金额',
                     type: 'error'
                 });
                 return ;
-            }  else {
+            }
+            else
+            {
                 this.$socket.emit("COMMAND",{
                     type:"CHECK_CARD",
-                    roomNumber: this.roomNumber,
-                    memberIndex: this.memberIndex
+                    RoomNumber: this.RoomNumber,
+                    PlayerIndex: this.PlayerIndex
                 });
             }
         },
         OnClickFoldCard(){
             this.$socket.emit("COMMAND",{
                 type:"FOLD_CARD",
-                roomNumber: this.roomNumber,
-                memberIndex: this.memberIndex
+                RoomNumber: this.RoomNumber,
+                PlayerIndex: this.PlayerIndex
             });
         },
         OnClickEndUseCard(){
             this.$socket.emit("COMMAND",{
                 type:"END_USE_CARD",
-                roomNumber: this.roomNumber,
-                memberIndex: this.memberIndex
+                RoomNumber: this.RoomNumber,
+                PlayerIndex: this.PlayerIndex
             });
         }
     },
     computed: {
-        desc() {
-            if (this.judgerCard) {
-                return this.judgerCard.desc;
-            } else {
-                return "N/A"
-            }
-        },
+        
     }
 }
 </script>
