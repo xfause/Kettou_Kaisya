@@ -9,8 +9,8 @@
     UseCardFee: "Array[int] / 每回合出牌消耗资金",
     RoundLimit: "int / 回合上限",
     RoundInitCredit: "int / 回合恢复资金",
-    MaxBetCount: "int / 玩家下注的角斗士数量上限",
-    MinBetMoney: "int / 每手下注的资金下限",
+    MaxBetFighterCount: "int / 玩家下注的角斗士数量上限",
+    MinBetCredit: "int / 每手下注的资金下限",
 
 }
 ```
@@ -113,8 +113,6 @@
     Desc: "String / 描述",
     // 裁判牌触发效果
     // 如果没有对应阶段效果则没有该项
-    // 下注阶段开始前
-    OnBeforePlayerBetStage: "Func / (RoomData) / return RoomData",
     // 下注阶段结束后
     OnAfterPlayerBetStage: "Func / (RoomData) / return RoomData",
     // 玩家下注前

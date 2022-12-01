@@ -60,6 +60,8 @@
                         :RoomNumber="GameData.RoomNumber" 
                         :FighterStatusList="GameData.FighterStatusList"
                         :PlayerTempCredit="GameData.MyInfos.TempCredit" 
+                        :MinBetCredit="GameConfig.MinBetCredit" 
+                        :MaxBetFighterCount="GameConfig.MaxBetFighterCount" 
                         :BetDetails="GameData.BetDetails"
                         :FighterBetDetails="GetFighterBetDetails(f.Id)" 
                         :Fighter="f" 
@@ -192,7 +194,7 @@ export default {
                 HandCards: [],
                 RemainCardsNum: -1,
                 OtherPlayerList: [],
-                MyInfo: null,
+                MyInfos: null,
             }
         }
     },
@@ -208,6 +210,7 @@ export default {
         // this.sockets = io.connect("http://localhost:4001");
         this.$socket.open();
 
+        // 注册API =============================================================
         // 连接到房间
         this.$socket.emit("COMMAND", {
             type: "CONNECT_TO_ROOM",
@@ -230,7 +233,16 @@ export default {
         this.sockets.subscribe("INIT_GAME_DATA", (result) => {
             this.SetInitGameData(result);
         });
+        // 接受下注后更新的数据
+        this.sockets.subscribe("AFTER_BET_ON_FIGHTER", (result) => {
+            this.AfterPlayerBetFighter(result);
+        });
+        // 更新游戏阶段
+        this.socket.subscribe("CHANGE_GAME_STAGE", (result)=>{
+            this.OnChangeGameStage(result);
+        });
 
+        // 前端设置 =============================================================
         // 设置页面
         this.WindowWidth = window.innerWidth;
         this.WindowHeight = window.innerHeight;
@@ -300,7 +312,8 @@ export default {
         },
 
         // 获取每个角斗士身上的下注信息
-        GetFighterBetDetails(id) {
+        GetFighterBetDetails(id) 
+        {
             let res = [];
             this.GameData.FighterInfoList.map((f) => {
                 if (f.Id == id) {
@@ -308,6 +321,65 @@ export default {
                 }
             });
             return res;
+        },
+
+        // 接受下注后更新的数据
+        AfterPlayerBetFighter(res)
+        {
+            const {IsSuccess, ErrorMessage, BetPlayerIndex, Data} = res;
+            if (IsSuccess)
+            {
+                let {PublicJackpot, BetDetails, FighterInfoList, BetPlayerInfo} = Data;
+                this.GameData.PublicJackpot = PublicJackpot;
+                this.GameData.FighterInfoList = FighterInfoList;
+                this.GameData.BetDetails = BetDetails;
+                if (BetPlayerIndex == this.GameData.Index)
+                {
+                    // 当前玩家下注成功
+                    this.GameData.MyInfos.Status = BetPlayerInfo.Status;
+                    this.GameData.MyInfos.TempCredit = BetPlayerInfo.TempCredit;
+                }
+                else
+                {
+                    // 其他玩家下注成功
+                    let pIdxInOtherPL = this.GameData.OtherPlayerList.findIndex((p)=> p.Index == BetPlayerIndex);
+                    if (pIdxInOtherPL != -1)
+                    {
+                        this.GameData.OtherPlayerList[pIdxInOtherPL].Status = BetPlayerInfo.Status;
+                        this.GameData.OtherPlayerList[pIdxInOtherPL].TempCredit = BetPlayerInfo.TempCredit;
+                    }
+                }
+            }
+            else 
+            {
+                if (BetPlayerIndex == this.GameData.Index)
+                {
+                    // 下注失败 提示错误信息
+                    this.$message({
+                        showClose: false,
+                        // TODO: erro message code to chinese
+                        message: ErrorMessage,
+                        type: 'error'
+                    });
+                }
+            }
+        },
+
+        // 更新游戏阶段
+        OnChangeGameStage(res)
+        {
+            const {CurrentStage} = res;
+            this.GameData.CurrentStage = CurrentStage;
+            if (CurrentStage == "CARD")
+            {
+                const {PlayerStatus, CurrentPlayerIndex} = res;
+                this.GameData.MyInfos.Status = PlayerStatus;
+                this.GameData.CurrentPlayerIndex = CurrentPlayerIndex;
+            }
+            else if (CurrentStage == "JUDGE")
+            {
+                this.GameData.MyInfos.Status = PlayerStatus;
+            }
         },
 
         // tool functions 工具方法 ===========================

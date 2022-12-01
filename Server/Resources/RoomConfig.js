@@ -7,8 +7,8 @@ const NormalConfig = {
     UseCardFee: [200, 300, 400, 500],
     RoundLimit: 4,
     RoundInitCredit: 5000,
-    MaxBetCount: 3,
-    MinBetMoney: 500
+    MaxBetFighterCount: 3,
+    MinBetCredit: 500
 }
 
 module.exports = {

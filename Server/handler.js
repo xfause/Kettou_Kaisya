@@ -40,6 +40,9 @@ module.exports = function handleSynchronousClient(args, socket, socketServer)
         case "CONNECT_TO_ROOM":
             ConnectToRoom(args, socket, socketServer);
           break;
+        case "BET_ON_FIGHTER":
+            OnBetFighter(args, socket);
+            break;
     }
 }
 
@@ -50,7 +53,7 @@ function ConnectToRoom(args, socket, socketServer)
     if (CacheUserPrevRoomNumber[UserUid])
     {
         let RoomNumber = CacheUserPrevRoomNumber[UserUid];
-        let Player = CacheRoomsData[RoomNumber]["PlayerList"].map(v=>v.UserUid == UserUid)[0];
+        let Player = CacheRoomsData[RoomNumber].PlayerList.map(v=>v.UserUid == UserUid)[0];
         Player.Socket = socket;
 
         Player.Socket.emit("RECONNECT_TO_ROOM", {
@@ -108,9 +111,9 @@ function ConnectToRoom(args, socket, socketServer)
                 Status: "NOT_BETED",
             });
 
-            CacheRoomsData[RoomNumber]["PlayerList"] = PlayerList;
+            CacheRoomsData[RoomNumber].PlayerList = PlayerList;
             // 发送开始事件
-            CacheRoomsData[RoomNumber]["PlayerList"].map(p => {
+            CacheRoomsData[RoomNumber].PlayerList.map(p => {
                 p.Socket.emit("START", {
                     RoomNumber,
                     Index: p.Index,
@@ -132,8 +135,8 @@ function InitGameData(RoomNumber)
     GameData.FighterStatusList = CacheRoomsData[RoomNumber].FighterStatusList;
     GameData.RoomConfig = CacheRoomsData[RoomNumber].RoomConfig;
     // 下注顺序
-    GameData.CurrentPlayerIndex = CacheRoomsData[RoomNumber]["PlayerList"][0].Index;
-    GameData.StartPlayerIndex = CacheRoomsData[RoomNumber]["PlayerList"][0].Index;
+    GameData.CurrentPlayerIndex = CacheRoomsData[RoomNumber].PlayerList[0].Index;
+    GameData.StartPlayerIndex = CacheRoomsData[RoomNumber].PlayerList[0].Index;
     GameData.CurrentRound = 1;
     GameData.PublicJackpot = 0;
     GameData.CurrentStage = "BET";
@@ -157,7 +160,7 @@ function InitGameData(RoomNumber)
     // 清空桌面牌队列
     GameData.TableCardList = [];
     // 初始化玩家数据
-    GameData.PlayerList = CacheRoomsData[RoomNumber]["PlayerList"];
+    GameData.PlayerList = CacheRoomsData[RoomNumber].PlayerList;
     GameData.PlayerList.map(p=>{
         p.GameRoomNumber = RoomNumber;
         p.Status = "NOT_BETED";
@@ -221,4 +224,123 @@ function RestoreGameData(RoomNumber, UserUid)
         },
         OtherPlayerList,
     });
+}
+
+function OnBetFighter(args, socket)
+{
+    let { RoomNumber, FighterId, PlayerIndex} = args;
+    let GameData = CacheRoomsData[RoomNumber];
+    
+    let PlayerIndexOfList = GameData.PlayerList.findIndex((obj => obj.Index == PlayerIndex));
+    let BetCredit = GameData.RoomConfig.MinBetCredit;
+
+    // 临时资金不够下注
+    if (GameData.PlayerList[PlayerIndexOfList].TempCredit < GameData.RoomConfig.MinBetCredit)
+    {
+        GameData.PlayerList[PlayerIndexOfList].map(p=>{
+            p.Socket.emit("AFTER_BET_ON_FIGHTER",{
+                IsSuccess: false,
+                ErrorMessage: "NOT_ENOUGH_TEMP_CREDIT",
+                BetPlayerIndex: PlayerIndex,
+                Data:{}
+            });
+            
+        })
+        return;
+    }
+    // 已经下注超过三名角斗士
+    if (GameData.PlayerList[PlayerIndexOfList].BetDetails.length == 3)
+    {   
+        GameData.PlayerList[PlayerIndexOfList].map(p=>{
+            p.Socket.emit("AFTER_BET_ON_FIGHTER",{
+                IsSuccess: false,
+                ErrorMessage: "OUT_MAX_BET_COUNT",
+                BetPlayerIndex: PlayerIndex,
+                Data:{}
+            });
+            
+        })
+        return;
+    }
+    let mBetIndex = GameData.PlayerList[PlayerIndexOfList].BetDetails.findIndex((b => b.FighterId == FighterId));
+    if (mBetIndex == -1)
+    {
+        // 没有下注过给这个角斗士
+        GameData.PlayerList[PlayerIndexOfList].BetDetails.push({
+            FighterId, BetCredit
+        });
+    }
+    else
+    {
+        //下注过给这个角斗士
+        GameData.PlayerList[PlayerIndexOfList].BetDetails[mBetIndex].BetCredit += BetCredit;
+    }
+    
+    // 把下注资金加入公共奖池
+    GameData.PublicJackpot += BetCredit;
+    GameData.PlayerList[PlayerIndexOfList].TempCredit -= BetCredit;
+    // 下注超过3个 修改玩家状态
+    if (GameData.PlayerList[PlayerIndexOfList].BetDetails.length == 3) {
+        GameData.PlayerList[PlayerIndexOfList].Status = "BETED";
+    }
+    // 修改Fighter结构里的BetDetails
+    let fIndex = GameData.FighterInfoList.findIndex((f => f.Id == FighterId));
+    let pIdxInFighterBetDetails = GameData.FighterInfoList[fIndex].BetDetails.findIndex((b => b.BetPlayerIndex == PlayerIndex));
+    if (pIdxInFighterBetDetails == -1)
+    {
+        // 该角斗士第一次被该玩家下注
+        GameData.FighterInfoList[fIndex].BetDetails.push({
+            FighterId, BetCredit
+        });
+    }
+    else
+    {
+        GameData.FighterInfoList[fIndex].BetDetails[pIdxInFighterBetDetails].BetCredit += BetCredit;
+    }
+    // 发送修改后的数据给所有玩家
+    GameData.PlayerList.map(p => {
+        let Data = {
+            PublicJackpot: GameData.PublicJackpot,
+            BetDetails: GameData.PlayerList[PlayerIndexOfList].BetDetails,
+            FighterInfoList:GameData.FighterInfoList,
+            BetPlayerInfo : {
+                Status: GameData.PlayerList[PlayerIndexOfList].Status,
+                TempCredit : GameData.PlayerList[PlayerIndexOfList].TempCredit,
+            }
+        }
+        p.socket.emit("AFTER_BET_ON_FIGHTER", {
+            IsSuccess: true,
+            ErrorMessage: "",
+            BetPlayerIndex: PlayerIndex,
+            Data
+        })
+    })
+
+    // 统计已下注人数
+    let BetPlayerCount = 0;
+    GameData.PlayerList.map(p => {
+        if (p.Status === "BETED") {
+            BetPlayerCount += 1;
+        }
+    })
+    if (BetPlayerCount == GameData.RoomConfig.RoomPlayerLimit)
+    {
+        // 下注阶段结束后翻开裁判牌 执行特殊效果
+        if (GameData.JudgerCardInfo.OnAfterPlayerBetStage != null)
+        {
+            GameData = GameData.JudgerCardInfo.OnAfterPlayerBetStage(GameData);
+        }
+        // 进入出牌阶段
+        GameData.CurrentStage = "CARD";
+        // TODO: 出牌玩家顺序应该变更 目前为固定从最先进入房间的玩家开始
+        GameData.CurrentPlayerIndex = GameData.PlayerList[0].Index;
+        GameData.PlayerList.map(p=>{
+            p.Status = "NOT_FOLDED";
+            p.Socket.emit("CHANGE_GAME_STAGE", {
+                CurrentStage: GameData.CurrentStage,
+                PlayerStatus: p.Status,
+                CurrentPlayerIndex: GameData.CurrentPlayerIndex
+            });
+        })
+    }
 }

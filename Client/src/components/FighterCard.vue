@@ -35,31 +35,17 @@
           <div>赏金倍率:{{ creditFactor }}</div>
           <div
             v-if="
-              this.status == `NOT_BETED` &&
-              this.roomStatus == `BET` &&
-              !IsBetedOnThisFighter
+              this.PlayerStatus == `NOT_BETED` &&
+              this.GameCurrStage == `BET` &&
+              PlayerIndex == CurrentPlayerIndex &&
+              IsCreditEnoughBetOnce &&
+              IsOverMaxBetCount
             "
           >
-            <el-button
-              v-if="!this.IsShowBetInput && PlayerIndex == CurrentPlayerIndex"
-              @click="this.OnShowBetInput"
-            >
+            <el-button @click="this.OnBetFighter">
               下注
             </el-button>
-            <div v-if="this.IsShowBetInput">
-              <el-input-number
-                :value="0"
-                :max="this.TempCredit"
-                :min="0"
-                :step="1"
-                :step-strictly="true"
-                :controls="false"
-                @change="this.OnBetInputChange"
-                class="bet_fighter_credit_input"
-              />
-              <el-button @click="this.OnSendBetData"> 确定 </el-button>
-              <el-button @click="this.OnHideBetInput"> 取消 </el-button>
-            </div>
+            <div>已下注:{{CreditBetOnCurrFighter}}</div>
           </div>
         </div>
       </el-popover>
@@ -72,7 +58,6 @@
 </template>
 
 <script>
-import { EventBus } from "../eventBus";
 
 export default {
   name: "FighterCard",
@@ -81,68 +66,45 @@ export default {
     PlayerStatus: String, // player status
     GameCurrStage: String, // room status
     PlayerTempCredit: Number,
+    MinBetCredit: Number,
     PlayerIndex: Number,
     CurrentPlayerIndex: Number,
     RoomNumber: String,
     BetDetails: Array,
     FighterBetDetails: Array,
-    FighterStatusList: Array
+    FighterStatusList: Array,
+    MaxBetFighterCount: Number,
   },
-  data() {
-    return {
-      IsShowBetInput: false,
-      MaxBetCredit: this.PlayerTempCredit,
-      CurrentBetMoney: 0,
-    };
+  data() 
+  {
+    return {};
   },
-  created() {
-    var that = this;
-    EventBus.$on("IsOnBetOtherFighter", function (d) {
-      if (d.id != that.id) {
-        that.IsShowBetInput = false;
-      }
-    });
-  },
-  mounted() {
-    // TODO
-    // 修改命令标识符
-    this.sockets.subscribe("ALREADY_BET_ONCE", () => {
-      this.IsShowBetInput = false;
-    });
-  },
-  methods: {
-    GetBuffDesc(s){
+  created() { },
+  mounted() { },
+  methods: 
+  {
+    GetBuffDesc(s)
+    {
       let t = this.FighterStatusList.find(x => x.name === s);
-      if (t==undefined) {
+      if (t==undefined) 
+      {
         return s;
-      } else {
+      } 
+      else 
+      {
         return t.desc;
       }
     },
-    OnShowBetInput() {
-      EventBus.$emit("IsOnBetOtherFighter", {
-        id: this.id,
-      });
-      this.IsShowBetInput = true;
-    },
-    OnHideBetInput() {
-      this.IsShowBetInput = false;
-      this.CurrentBetMoney = 0;
-    },
-    OnSendBetData() {
+    OnBetFighter() 
+    {
       // TODO
-      // 向服务器发送下注指令
-      // this.$socket.emit("COMMAND", {
-      //   type: "BET_ON_FIGHTERS",
-      //   roomNumber: this.roomNumber,
-      //   fighterId: this.id,
-      //   betMoney: this.currentBetMoney,
-      //   memberIndex: this.memberIndex,
-      // });
-      // this.CurrentBetMoney = 0;
-    },
-    OnBetInputChange(currentValue) {
-      this.CurrentBetMoney = currentValue;
+      向服务器发送下注指令
+      this.$socket.emit("COMMAND", {
+        type: "BET_ON_FIGHTER",
+        RoomNumber: this.RoomNumber,
+        FighterId: this.id,
+        PlayerIndex: this.PlayerIndex,
+      });
     },
   },
   computed: {
@@ -188,17 +150,33 @@ export default {
         return "N/A";
       }
     },
-    IsBetedOnThisFighter() {
-      let res = false;
-      if (this.BetDetails) {
-        this.BetDetails.map((b) => {
-          if (b.FighterId == this.id) {
-            res = true;
-          }
-        });
+    IsCreditEnoughBetOnce() 
+    {
+      if (this.PlayerTempCredit < this.MinBetCredit)
+      {
+        return false;
       }
-      return res;
+      return true;
     },
+    IsOverMaxBetCount()
+    {
+      if (this.BetDetails.length < MaxBetFighterCount)
+      {
+        return true;
+      }
+      return false;
+    },
+    CreditBetOnCurrFighter()
+    {
+      let temp = 0;
+      this.BetDetails.map(b=>{
+        if (b.FighterId == this.id)
+        {
+          temp = b.BetCredit;
+        }
+      })
+      return temp;
+    }
   },
 };
 </script>
