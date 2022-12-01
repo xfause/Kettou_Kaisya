@@ -9,10 +9,6 @@
     <div class="card-name">{{ name }}</div>
     <div class="card-desc">id: {{ id }}</div>
     <div class="card-desc">desc: {{ desc }}</div>
-
-    <div class="card-bottom">
-      {{ str_type }}
-    </div>
   </div>
 </template>
 
@@ -23,8 +19,8 @@ export default {
     index: Number, // 当前卡牌的index
     data: Object, // 卡牌的信息
     OnChooseHandCard: Function, // 选择卡牌的回调
-    roomStatus: String, //房间状态
-    playerStatus: String, //玩家状态
+    CurrentRoomStage: String, //房间状态
+    PlayerStatus: String, //玩家状态
   },
   data() {
     return {};
@@ -34,40 +30,29 @@ export default {
   },
   computed: {
     id() {
-      return this.data.id;
+      return this.data.Id;
     },
     name() {
-      return this.data.name;
+      return this.data.Name;
     },
     desc() {
-      return this.data.desc;
+      return this.data.Desc;
     },
-    needTarget(){
-      return this.data.needTarget;
+    IsNeedTarget(){
+      return this.data.IsNeedTarget;
     },
     targetType(){
-      if (this.data.needTarget) {
-        return this.data.targetType;
+      if (this.data.TargetType) {
+        return this.data.TargetType;
       }
       return null;
     },
-    str_type() {
-      if (this.data.type == "HIT") {
-        return "直击";
-      } else if (this.data.type == "EFFECT") {
-        return "效果";
-      } else {
-        return "N/A";
-      }
-    },
-    isNoTargetDrag() {
+    IsNoTargetDrag() {
       return false;
       // if (
-      //   this.playerStatus == "NOT_FOLDED" ||
-      //   this.playerStatus == "PAID_USE_CARD"
-      // ) {
-      //   if (this.roomStatus == "CARD") {
-      //     if (this.needTarget == true) {
+      //   this.playerStatus == "NOT_FOLDED") {
+      //   if (this.CurrentRoomStage == "CARD") {
+      //     if (this.IsNeedTarget == true) {
       //       return false;
       //     } else {
       //       return true;
@@ -79,15 +64,12 @@ export default {
       //   return false;
       // }
     },
-    isTargetDrag() {
-      // todo
+    IsTargetDrag() {
       return true;
       // if (
-      //   this.playerStatus == "NOT_FOLDED" ||
-      //   this.playerStatus == "PAID_USE_CARD"
-      // ) {
+      //   this.playerStatus == "NOT_FOLDED") {
       //   if (this.roomStatus == "CARD") {
-      //     if (this.needTarget == true) {
+      //     if (this.IsNeedTarget == true) {
       //       return true;
       //     } else {
       //       return false;
@@ -102,7 +84,7 @@ export default {
   },
   methods: {
     mouseUp(e){
-      if (this.isNoTargetDrag) {
+      if (this.IsNoTargetDrag) {
         this.noTargetDrag = false;
         this.cardDom.style["transition"] = "all 0s";
         this.cardDom.style["transform"] = `translate(${
@@ -111,9 +93,9 @@ export default {
       }
     },
     mouseDown(e) {
-      if (this.isNoTargetDrag) {
+      if (this.IsNoTargetDrag) {
         this.noTargetDrag = true;
-        window.noTargetDrag = true;
+        window.IsNoTargetDrag = true;
 
         this.cardDom.style["transition"] = "all 0s";
 
@@ -125,11 +107,13 @@ export default {
         window.cardInitY = this.startY;
 
         this.OnOutCardLoop();
-      } else if (this.isTargetDrag) {
+      } else if (this.IsTargetDrag) {
+        window.IsTargetDrag = true;
+        window.HandCardTargetType = this.targetType;
+
         this.$emit("OnClientUseCardStart", {
           startX: e.pageX,
           startY: e.pageY,
-          targetType: this.targetType
         });
       }
 
@@ -152,44 +136,5 @@ export default {
 </script>
 
 <style>
-.card {
-  position: relative;
-  width: 135px;
-  height: 170px;
-  font-size: 12px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background: grey;
-}
-
-.card-name {
-  height: 45px;
-  background: #394950;
-  color: white;
-  border-top-right-radius: 5px;
-  border-top-left-radius: 5px;
-  text-align: center;
-  margin-bottom: 15px;
-  box-sizing: border-box;
-  padding: 8px 0;
-  font-weight: bold;
-}
-
-.card-desc {
-  padding: 0 8px;
-}
-
-.card-bottom {
-  position: absolute;
-  bottom: 0px;
-  width: 100%;
-  background: #394950;
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 10px;
-  color: white;
-  box-sizing: border-box;
-  border-bottom-right-radius: 5px;
-  border-bottom-left-radius: 5px;
-}
+  @import '../assets/styles/Card.css'
 </style>

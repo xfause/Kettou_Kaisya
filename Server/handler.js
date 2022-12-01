@@ -53,9 +53,10 @@ function ConnectToRoom(args, socket, socketServer)
         let Player = CacheRoomsData[RoomNumber]["PlayerList"].map(v=>v.UserUid == UserUid)[0];
         Player.Socket = socket;
 
-        player.Socket.emit("RECONNECT_TO_ROOM", {
+        Player.Socket.emit("RECONNECT_TO_ROOM", {
             RoomNumber: RoomNumber,
-            Index: Player.Index
+            Index: Player.Index,
+            RoomConfig: CacheRoomsData[RoomNumber].RoomConfig
         });
         // 恢复牌桌数据
         RestoreGameData(RoomNumber, UserUid);
@@ -83,7 +84,7 @@ function ConnectToRoom(args, socket, socketServer)
                 Seed,
                 RandFunc: seedrandom(Seed),
                 FighterStatusList,
-                RoomConfig
+                RoomConfig: NormalConfig
             }
 
             let PlayerList = [];
@@ -113,7 +114,6 @@ function ConnectToRoom(args, socket, socketServer)
                 p.Socket.emit("START", {
                     RoomNumber,
                     Index: p.Index,
-                    RoomConfig
                 });
             });
             // 初始化局内数据
@@ -208,8 +208,7 @@ function RestoreGameData(RoomNumber, UserUid)
     player.Socket.emit("RESTORE_DATA", {
         Seed, RandFunc, PublicJackpot, CurrentStage, 
         CurrentRound, FighterStatusList, CurrentPlayerIndex,
-        RoundNumLimit: RoomConfig.RoundLimit,
-        JudgerCardInfo, FighterInfoList, TableCardList,
+        RoomConfig, JudgerCardInfo, FighterInfoList, TableCardList,
         HandCards: player.HandCards,
         RemainCardsNum: player.RemainCards.length,
         MyInfos: {

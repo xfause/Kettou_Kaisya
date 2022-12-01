@@ -3,7 +3,7 @@
         <div>用户序号:{{PlayerIndex}}</div>
         <div>临时资金:{{TempCredit}}</div>
         <div>胜点:{{WinCredit}}</div>
-        <div>状态:{{str_status}}</div>
+        <div>状态:{{Str_status}}</div>
 
         <OperationPanel
             :PlayerStatus="this.Status"
@@ -44,15 +44,15 @@ export default {
     },
     computed: {
         Str_status(){
-            if (this.status == "BETED") {
+            if (this.Status == "BETED") {
                 return "已下注"
-            } else if (this.status == "NOT_BETED") {
+            } else if (this.Status == "NOT_BETED") {
                 return "未下注"
-            } else if (this.status == "FOLDED") {
+            } else if (this.Status == "FOLDED") {
                 return "已弃牌"
-            } else if (this.status == "NOT_FOLDED") {
+            } else if (this.Status == "NOT_FOLDED") {
                 return "未弃牌"
-            } else if (this.status == "PAID_USE_CARD") {
+            } else if (this.Status == "PAID_USE_CARD") {
                 return "已出牌"
             }
             return "N/A";

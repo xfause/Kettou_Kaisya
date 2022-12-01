@@ -131,7 +131,7 @@ export default {
     },
     OnSendBetData() {
       // TODO
-      // 向服务器发送下注金额
+      // 向服务器发送下注指令
       // this.$socket.emit("COMMAND", {
       //   type: "BET_ON_FIGHTERS",
       //   roomNumber: this.roomNumber,

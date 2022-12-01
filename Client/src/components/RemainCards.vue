@@ -1,14 +1,14 @@
 <template>
     <div>
-        <div>牌库:{{remainCardsNum}}张</div>
+        <div>牌库剩余:{{RemainCardsNum}}张</div>
     </div>
 </template>
 
 <script>
 export default {
-    name: "MyBasicInfo",
+    name: "RemainCards",
     props: {
-        remainCardsNum: Number, // 剩余金钱数
+        RemainCardsNum: Number, // 剩余金钱数
     },
     data(){
         return {}

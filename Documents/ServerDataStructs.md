@@ -57,7 +57,7 @@
         Status: "String / 玩家目前状态",
         BetDetails: 
         [{
-            FighterID: "String / 角斗士编号",
+            FighterId: "String / 角斗士编号",
             BetCredit: "int / 下注金额",
         }]
         HandCards: ["Card / 手牌信息", ...],
@@ -78,7 +78,7 @@
     DefaultIsActive: "bool / 默认是否明牌",
     IsActive: "bool / 当前是否明牌"
     IsNeedTarget: "bool / 是否是指向性",
-    // FIGHTER / PLAYER
+    // TABLE / FIGHTER / PLAYER / OTHER_PLAYER
     TargetType: "String / 指向目标类型",
     // 卡牌效果
     // 如果没有对应效果则没有该项

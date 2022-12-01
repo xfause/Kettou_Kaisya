@@ -54,7 +54,7 @@ function SendInitDataToAllPlayer(GameData)
         p.Socket.emit("INIT_GAME_DATA", {
             Seed, RandFunc, PublicJackpot, CurrentStage, 
             CurrentRound, 
-            RoundNumLimit: RoomConfig.RoundLimit,
+            RoomConfig,
             FighterStatusList,
             RoomNumber: GameData.RoomNumber,
             CurrentPlayerIndex,
