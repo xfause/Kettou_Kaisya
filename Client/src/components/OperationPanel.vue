@@ -20,12 +20,12 @@
                 "
         >
             <el-button
-                @click="this.OnClickCheckCard"
+                @click="this.OnCheckCard"
             >
                 过牌
             </el-button>
             <el-button
-                @click="this.OnClickFoldCard"
+                @click="this.OnFoldCard"
             >
                 弃牌
             </el-button>
@@ -67,13 +67,13 @@ export default {
             } else {
                 // change server data
                 this.$socket.emit("COMMAND",{
-                    type:"END_BET_FIGHTERS",
+                    type:"PLAYER_END_BET_FIGHTERS",
                     RoomNumber: this.RoomNumber,
                     PlayerIndex: this.PlayerIndex
                 });
             }
         },
-        OnClickCheckCard(){
+        OnCheckCard(){
             if (this.TempCredit < this.CheckCardCost)
             {
                 this.$message({
@@ -86,13 +86,13 @@ export default {
             else
             {
                 this.$socket.emit("COMMAND",{
-                    type:"CHECK_CARD",
+                    type:"PLAYER_CHECK_CARD",
                     RoomNumber: this.RoomNumber,
                     PlayerIndex: this.PlayerIndex
                 });
             }
         },
-        OnClickFoldCard(){
+        OnFoldCard(){
             this.$socket.emit("COMMAND",{
                 type:"FOLD_CARD",
                 RoomNumber: this.RoomNumber,

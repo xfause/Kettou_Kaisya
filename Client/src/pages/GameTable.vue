@@ -233,9 +233,22 @@ export default {
         this.sockets.subscribe("INIT_GAME_DATA", (result) => {
             this.SetInitGameData(result);
         });
+        // 更新卡牌效果生效后的游戏数据
+        this.sockets.subscribe("ACTIVE_CARD_EFFECT", (result)=>{
+           let TempData = this.$Tools.ActiveCardEffect(result);
+           this.UpdateFullData(TempData);
+        });
         // 接受下注后更新的数据
         this.sockets.subscribe("AFTER_BET_ON_FIGHTER", (result) => {
             this.AfterPlayerBetFighter(result);
+        });
+        // 玩家下注结束后更新状态及当前玩家index
+        this.sockets.subscribe("AFTER_PLAYER_END_BET_FIGHTERS", (result) => {
+            this.AfterPlayerEndBet(result);
+        });
+         // 玩家过牌后更新状态
+         this.sockets.subscribe("AFTER_PLAYER_CHECK_CARD", (result) => {
+            this.AfterPlayerCheckCard(result);
         });
         // 更新游戏阶段
         this.socket.subscribe("CHANGE_GAME_STAGE", (result)=>{
@@ -376,9 +389,65 @@ export default {
                 this.GameData.MyInfos.Status = PlayerStatus;
                 this.GameData.CurrentPlayerIndex = CurrentPlayerIndex;
             }
-            else if (CurrentStage == "JUDGE")
+            // else if (CurrentStage == "JUDGE")
+            // {
+            //     const {PlayerStatus} = res;
+            //     this.GameData.MyInfos.Status = PlayerStatus;
+            // }
+        },
+
+        AfterPlayerEndBet(res)
+        {
+            const {PrevPlayerStatus, PrevPlayerIndex, CurrentPlayerIndex} = res;
+            this.GameData.CurrentPlayerIndex = CurrentPlayerIndex
+            if (PrevPlayerIndex == Index)
             {
-                this.GameData.MyInfos.Status = PlayerStatus;
+                this.GameData.MyInfos.Status = PrevPlayerStatus;
+            }
+            else
+            {
+                const pIndex = this.GameData.OtherPlayerList.findIndex(
+                    (obj) => obj.Index == p.PrevPlayerStatus
+                );
+                this.GameData.OtherPlayerList[pIndex].Status = PrevPlayerStatus;
+            }
+        },
+
+        AfterPlayerCheckCard(res)
+        {
+            const {IsSuccess, ErrorMessage, Data} = res;
+            if (IsSuccess)
+            {
+                if (Data.PrevPlayerIndex == this.GameData.Index)
+                {
+                    const {HandCards, RemainCardsNum, TempCredit, PublicJackpot, CurrentPlayerIndex} = Data;
+                    this.GameData.HandCards = HandCards;
+                    this.GameData.RemainCardsNum = RemainCardsNum;
+                    this.GameData.PublicJackpot = PublicJackpot;
+                    this.GameData.MyInfos.TempCredit = TempCredit;
+                    this.GameData.CurrentPlayerIndex = CurrentPlayerIndex;
+                }
+                else
+                {
+                    const {PrevPlayerHandCardsNum, PrevPlayerTempCredit, PublicJackpot, CurrentPlayerIndex} = Data;
+                    const pIdx = this.GameData.OtherPlayerList.findIndex(
+                        (obj) => obj.Index == Data.PrevPlayerIndex
+                    );
+                    this.GameData.OtherPlayerList[pIdx].HandCardsNum = PrevPlayerHandCardsNum;
+                    this.GameData.OtherPlayerList[pIdx].TempCredit = PrevPlayerTempCredit;
+                    this.GameData.PublicJackpot = PublicJackpot;
+                    this.GameData.CurrentPlayerIndex = CurrentPlayerIndex;
+                }
+            }
+            else
+            {
+                // 过牌失败 显示错误信息
+                this.$message({
+                    showClose: false,
+                    // TODO: erro message code to chinese
+                    message: ErrorMessage,
+                    type: 'error'
+                });
             }
         },
 
@@ -594,12 +663,14 @@ export default {
                             // TODO
                             let bCanUseCard = true;
                             if (!bCanUseCard) {
-                                
+                                // TODO
                             } else {
-                                // k = cd.dataset.id;
+                                k = cd.dataset.id;
                                 // // console.log("use target card success");
                                 // // console.log("card id:" , this.currentChosenHandCardId);
-                                // // console.log("target id:" , k);
+                                
+                                // eslint-disable-next-line no-console
+                                console.log("target id:" , k);
 
                                 // let cI = this.gameData.handCards.findIndex(
                                 // (obj) => obj.id == this.currentChosenHandCardId
@@ -619,6 +690,35 @@ export default {
                     });
                 }
             };
+        },
+        // 卡牌特殊效果生效后更新全局数据
+        UpdateFullData(Data)
+        {
+            const {
+                PublicJackpot, CurrentStage, CurrentRound,
+                RoomConfig, FighterStatusList, RoomNumber,
+                CurrentPlayerIndex, JudgerCardInfo, FighterInfoList,
+                TableCardList, HandCards, RemainCardsNum,
+                MyInfos, OtherPlayerList, BetDetails
+            } = Data;
+            this.GameData.PublicJackpot = PublicJackpot;
+            this.GameData.CurrentStage = CurrentStage;
+            this.GameData.FighterStatusList = FighterStatusList;
+            this.GameData.RoomNumber = RoomNumber;
+            this.GameData.CurrentRound = CurrentRound;
+            this.GameData.CurrentPlayerIndex = CurrentPlayerIndex;
+            this.GameData.JudgerCardInfo = JudgerCardInfo;
+            this.GameData.FighterInfoList = FighterInfoList.sort(function (a, b) {
+                return parseFloat(a.id) - parseFloat(b.id);
+            });
+            this.GameData.BetDetails = BetDetails;
+            this.GameData.TableCardList = TableCardList;
+            this.GameData.HandCards = HandCards;
+            this.GameData.RemainCardsNum = RemainCardsNum;
+            this.GameData.MyInfos = MyInfos;
+            this.GameData.Index = MyInfos.Index;
+            this.GameData.OtherPlayerList = OtherPlayerList;
+            this.GameConfig = RoomConfig;
         }
     },
 

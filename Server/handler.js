@@ -24,6 +24,7 @@ const {
 // Import functionality
 // TODO
 let ToolFuncs = require("./Scripts/Tools")
+let UpdataCardEffect = require("./Scripts/UpdateCardEffect")
 
 // Server Data
 const WaitPairQueue = []; // 等待排序的队列
@@ -43,6 +44,10 @@ module.exports = function handleSynchronousClient(args, socket, socketServer)
         case "BET_ON_FIGHTER":
             OnBetFighter(args, socket);
             break;
+        case "PLAYER_END_BET_FIGHTERS":
+            OnPlayerEndBetFighters(args, socket);
+        case "PLAYER_CHECK_CARD":
+            OnPlayerCheckCard(args, socket);
     }
 }
 
@@ -326,10 +331,9 @@ function OnBetFighter(args, socket)
     if (BetPlayerCount == GameData.RoomConfig.RoomPlayerLimit)
     {
         // 下注阶段结束后翻开裁判牌 执行特殊效果
-        if (GameData.JudgerCardInfo.OnAfterPlayerBetStage != null)
-        {
-            GameData = GameData.JudgerCardInfo.OnAfterPlayerBetStage(GameData);
-        }
+        GameData.JudgerCardInfo.IsActive = true;
+        GameData = UpdataCardEffect.ActiveJudgeCardAfterPlayerBetStage(GameData);
+
         // 进入出牌阶段
         GameData.CurrentStage = "CARD";
         // TODO: 出牌玩家顺序应该变更 目前为固定从最先进入房间的玩家开始
@@ -343,4 +347,100 @@ function OnBetFighter(args, socket)
             });
         })
     }
+}
+
+function OnPlayerEndBetFighters(args, socket)
+{
+    const {RoomNumber, PlayerIndex} = args;
+    let PlayerIndexOfList = GameData.PlayerList.findIndex((obj => obj.Index == PlayerIndex));
+    let GameData = CacheRoomsData[RoomNumber];
+
+    GameData.PlayerList[PlayerIndexOfList].Status = "BETED";
+    GameData.CurrentPlayerIndex = 
+        ToolFuncs.GetNextPlayerIndex(
+            GameData.CurrentPlayerIndex,
+            GameData.PlayerList,
+            GameData.RoomConfig.RoomPlayerLimit,
+            "BETED"
+        );
+    GameData.PlayerList.map((p)=>{
+        p.Socket.emit("AFTER_PLAYER_END_BET_FIGHTERS", {
+            PrevPlayerStatus: GameData.PlayerList[PlayerIndexOfList].Status,
+            PrevPlayerIndex: PlayerIndex,
+            CurrentPlayerIndex: GameData.CurrentPlayerIndex,
+        });
+    });
+}
+
+function OnPlayerCheckCard(args, socket)
+{
+    const {RoomNumber, PlayerIndex} = args;
+    let GameData = CacheRoomsData[RoomNumber];
+
+    GameData = UpdataCardEffect.ActiveJudgeCardBeforePlayerCheckCard(GameData);
+
+    let PlayerIndexOfList = GameData.PlayerList.findIndex((obj => obj.Index == PlayerIndex));
+
+    //合法性判断
+    if (GameData.PlayerList[PlayerIndexOfList].TempCredit < GameData.RoomConfig.CheckCardCost)
+    {
+        socket.emit("AFTER_PLAYER_CHECK_CARD", {
+            IsSuccess: false,
+            ErrorMessage: "NOT_ENOUGH_TEMPCREDIT",
+            Data: {}
+        })
+    }
+    if (GameData.PlayerList[PlayerIndexOfList].HandCards.length >= GameData.RoomConfig.HandCardCountLimit)
+    {
+        socket.emit("AFTER_PLAYER_CHECK_CARD", {
+            IsSuccess: false,
+            ErrorMessage: "HAND_CARD_NUM_OUT_LIMIT",
+            Data: {}
+        })
+    }
+    // 成功过牌
+    GameData.PlayerList[PlayerIndexOfList].TempCredit -= GameData.RoomConfig.CheckCardCost;
+    GameData.PublicJackpot += GameData.RoomConfig.CheckCardCost;
+    GameData.CurrentPlayerIndex = 
+        ToolFuncs.GetNextPlayerIndex(
+            GameData.CurrentPlayerIndex,
+            GameData.PlayerList,
+            GameData.RoomConfig.RoomPlayerLimit,
+        );
+    var t = GetRandomNewCard(GameData.PlayerList[PlayerIndexOfList].RemainCards)
+    if (t !== null) {
+        GameData.PlayerList[PlayerIndexOfList].HandCards.push(t);
+    }
+    // 玩家获得新手牌 效果生效
+    GameData = UpdataCardEffect.ActiveHandCardBeforePlayerGetCard(GameData, t);
+
+    GameData.PlayerList.map(p=>{
+        if (p.Index == PlayerIndex){
+            p.Socket.emit("AFTER_PLAYER_CHECK_CARD",{
+                IsSuccess: true,
+                ErrorMessage: "",
+                Data:{
+                    HandCards: GameData.PlayerList[PlayerIndexOfList].HandCards,
+                    RemainCardsNum: GameData.PlayerList[PlayerIndexOfList].RemainCards.length,
+                    TempCredit: GameData.PlayerList[PlayerIndexOfList].TempCredit,
+                    PublicJackpot: GameData.PublicJackpot,
+                    CurrentPlayerIndex: GameData.CurrentPlayerIndex
+                }
+            })
+        }
+        else
+        {
+            p.Socket.emit("AFTER_PLAYER_CHECK_CARD",{
+                IsSuccess: true,
+                ErrorMessage: "",
+                Data:{
+                    PublicJackpot: GameData.PublicJackpot,
+                    CurrentPlayerIndex: GameData.CurrentPlayerIndex,
+                    PrevPlayerIndex: PlayerIndex,
+                    PrevPlayerTempCredit: GameData.PlayerList[PlayerIndexOfList].TempCredit,
+                    PrevPlayerHandCardsNum: GameData.PlayerList[PlayerIndexOfList].HandCards.length
+                }
+            })
+        }
+    })
 }

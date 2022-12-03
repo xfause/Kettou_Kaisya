@@ -74,5 +74,17 @@ function SendInitDataToAllPlayer(GameData)
     })
 }
 
+function GetNextPlayerIndex(CurrPlayerIndex, PlayerList, RoomPlayerLimit, Type="FOLDED")
+{
+    let times = 0;
+    let pIndex = PlayerList.findIndex(obj => obj.Index == CurrPlayerIndex);
+    while (PlayerList[pIndex].Status == Type && times < RoomPlayerLimit) {
+        pIndex = (pIndex + 1) % (RoomPlayerLimit);
+        times++;
+    }
+    return PlayerList[pIndex].Index;
+}
+
 exports.GetNextCard = GetNextCard;
 exports.SendInitDataToAllPlayer = SendInitDataToAllPlayer;
+exports.GetNextPlayerIndex = GetNextPlayerIndex;

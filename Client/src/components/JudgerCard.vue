@@ -1,7 +1,7 @@
 <template>
   <div class="judger_card">
     <div v-if="this.JudgerCard !== null">
-      <div v-if="this.CurrentStage == 'PREPARE' || this.CurrentStage == 'BET'">
+      <div v-if="this.JudgerCard.IsActive">
         <div>裁判卡</div>
         <div>背面</div>
       </div>

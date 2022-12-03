@@ -98,7 +98,6 @@ export default {
     OnBetFighter() 
     {
       // TODO
-      向服务器发送下注指令
       this.$socket.emit("COMMAND", {
         type: "BET_ON_FIGHTER",
         RoomNumber: this.RoomNumber,
@@ -160,7 +159,7 @@ export default {
     },
     IsOverMaxBetCount()
     {
-      if (this.BetDetails.length < MaxBetFighterCount)
+      if (this.BetDetails.length < this.MaxBetFighterCount)
       {
         return true;
       }

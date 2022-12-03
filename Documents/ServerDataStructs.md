@@ -82,8 +82,6 @@
     TargetType: "String / 指向目标类型",
     // 卡牌效果
     // 如果没有对应效果则没有该项
-    // 获取卡牌前
-    OnBeforeGetCard: "Func / (RoomData) / return RoomData",
     // 获取卡牌后
     OnAfterGetCard: "Func / (RoomData) / return RoomData",
     // 使用卡牌前
@@ -111,14 +109,11 @@
     Id: "String / 裁判编号",
     Name: "String / 名称",
     Desc: "String / 描述",
+    IsActive: "bool / 是否翻开"
     // 裁判牌触发效果
     // 如果没有对应阶段效果则没有该项
     // 下注阶段结束后
     OnAfterPlayerBetStage: "Func / (RoomData) / return RoomData",
-    // 玩家下注前
-    OnBeforePlayerBet: "Func / (RoomData) / return RoomData",
-    // 玩家下注后
-    OnAfterPlayerBet: "Func / (RoomData) / return RoomData",
     // 玩家出牌阶段开始前
     OnBeforePlayerUseCardStage: "Func / (RoomData) / return RoomData",
     // 玩家出牌阶段结束后
