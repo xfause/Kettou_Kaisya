@@ -24,7 +24,7 @@ const {
 // Import functionality
 // TODO
 let ToolFuncs = require("./Scripts/Tools")
-let UpdataCardEffect = require("./Scripts/UpdateCardEffect")
+let UpdataCardEffect = require("./Scripts/UpdateCardEffect");
 
 // Server Data
 const WaitPairQueue = []; // 等待排序的队列
@@ -48,6 +48,8 @@ module.exports = function handleSynchronousClient(args, socket, socketServer)
             OnPlayerEndBetFighters(args, socket);
         case "PLAYER_CHECK_CARD":
             OnPlayerCheckCard(args, socket);
+        case "PLAYER_FOLD_CARD":
+            OnPlayerFoldCard(args, socket);
     }
 }
 
@@ -347,6 +349,8 @@ function OnBetFighter(args, socket)
             });
         })
     }
+
+    CacheRoomsData[RoomNumber] = GameData;
 }
 
 function OnPlayerEndBetFighters(args, socket)
@@ -370,6 +374,8 @@ function OnPlayerEndBetFighters(args, socket)
             CurrentPlayerIndex: GameData.CurrentPlayerIndex,
         });
     });
+
+    CacheRoomsData[RoomNumber] = GameData;
 }
 
 function OnPlayerCheckCard(args, socket)
@@ -412,7 +418,7 @@ function OnPlayerCheckCard(args, socket)
         GameData.PlayerList[PlayerIndexOfList].HandCards.push(t);
     }
     // 玩家获得新手牌 效果生效
-    GameData = UpdataCardEffect.ActiveHandCardBeforePlayerGetCard(GameData, t);
+    GameData = UpdataCardEffect.ActiveHandCardAfterPlayerGetCard(GameData, t);
 
     GameData.PlayerList.map(p=>{
         if (p.Index == PlayerIndex){
@@ -443,4 +449,145 @@ function OnPlayerCheckCard(args, socket)
             })
         }
     })
+
+    GameData = UpdataCardEffect.ActiveJudgeCardAfterPlayerCheckCard(GameData);
+
+    CacheRoomsData[RoomNumber] = GameData;
+}
+
+function OnPlayerFoldCard(args, socket)
+{
+    const {RoomNumber, PlayerIndex} = args;
+    let GameData = CacheRoomsData[RoomNumber];
+
+    GameData = UpdataCardEffect.ActiveJudgeCardBeforePlayerFoldCard(GameData);
+
+    let PlayerIndexOfList = GameData.PlayerList.findIndex((obj => obj.Index == PlayerIndex));
+    GameData.PlayerList[PlayerIndexOfList].Status = "FOLDED";
+    GameData.CurrentPlayerIndex = GetNextPlayerIndex(
+        GameData.CurrentPlayerIndex,
+        GameData.PlayerList,
+        GameData.RoomConfig.RoomPlayerLimit
+    );
+
+    GameData = UpdataCardEffect.ActiveJudgeCardAfterPlayerFoldCard(GameData);
+
+    let FoldedPlayerNum = 0;
+    GameData.PlayerList.map(p => {
+        if (p.Status == "FOLDED") {
+            FoldedPlayerNum++;
+        }
+    });
+
+    if (FoldedPlayerNum == GameData.RoomConfig.RoomPlayerLimit) {
+        GameData.CurrentStage = "JUDGE";
+        GameData.PlayerList.map(p => {
+            p.Socket.emit("CHANGE_GAME_STAGE", {
+                CurrentStage: GameData.CurrentStage,
+                PlayerStatus: p.Status,
+                CurrentPlayerIndex: GameData.CurrentPlayerIndex
+            });
+        })
+
+        CacheRoomsData[RoomNumber] = GameData;
+
+        OnJudgeTableCards(RoomNumber);
+    }
+    else 
+    {
+        GameData.PlayerList.map(p => {
+            p.Socket.emit("AFTER_PLAYER_FOLD_CARD", {
+                IsSuccess: true,
+                ErrorMessage: "",
+                Data:{
+                    CurrentPlayerIndex: GameData.CurrentPlayerIndex,
+                    PrevPlayerIndex: PlayerIndex,
+                    PrevPlayerStatus: GameData.PlayerList[PlayerIndexOfList].Status
+                }
+            })
+        })
+        CacheRoomsData[RoomNumber] = GameData;
+    }
+}
+
+function OnJudgeTableCards(RoomNumber)
+{
+    let GameData = CacheRoomsData[RoomNumber];
+
+    GameData = UpdataCardEffect.ActiveJudgeCardBeforeJudgeStage(GameData);
+
+    //TODO: run all table cards
+    // 需要每次更新一张牌都更新数据
+
+    GameData = UpdataCardEffect.ActiveJudgeCardAfterJudgeStage(GameData);
+
+    GameData.CurrentStage = "CALC";
+    CacheRoomsData[RoomNumber] = GameData;
+
+    GameData.PlayerList.map(p => {
+        p.Socket.emit("CHANGE_GAME_STAGE", {
+            CurrentStage,
+        })
+      });
+    // 判定阶段结束 进入结算阶段
+    OnCalcStage(RoomNumber)
+}
+
+function OnCalcStage(RoomNumber)
+{
+    let GameData = CacheRoomsData[RoomNumber];
+
+    GameData = UpdataCardEffect.ActiveJudgeCardBeforeCalcStage(GameData);
+
+    // 计算获胜角斗士ID
+    let WinFighterId = GetWinFighterId(GameData);
+
+    GameData.PlayerList.map(p=>{
+        p.Socket.emit("WIN_FIGHTER_ID", {
+            WinFighterId
+        })
+    })
+
+    CacheRoomsData[RoomNumber] = GameData;
+
+    // 计算WinCredit和TempCredit
+    CalculateCredit(RoomNumber, WinFighterId);
+
+    GameData = CacheRoomsData[RoomNumber];
+    GameData = UpdataCardEffect.ActiveJudgeCardAfterCalcStage(GameData);
+    CacheRoomsData[RoomNumber] = GameData;
+
+    if (GameData.CurrentRound == GameData.RoomConfig.RoundLimit)
+    {
+        // 游戏结束
+        OnGameEnd(RoomNumber)
+    }
+    else
+    {
+        // 初始化下一回合数据
+        InitNewRound(RoomNumber)
+    }
+
+}
+
+function CalculateCredit(RoomNumber, WinFighterId)
+{
+    let GameData = CacheRoomsData[RoomNumber]
+    //TODO
+
+
+
+    CacheRoomsData[RoomNumber] = GameData;
+}
+
+function OnGameEnd(RoomNumber)
+{
+    let GameData = CacheRoomsData[RoomNumber];
+    // TODO
+}
+
+function InitNewRound(RoomNumber)
+{
+    let GameData = CacheRoomsData[RoomNumber];
+    // TODO
 }

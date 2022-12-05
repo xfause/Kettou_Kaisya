@@ -250,6 +250,10 @@ export default {
          this.sockets.subscribe("AFTER_PLAYER_CHECK_CARD", (result) => {
             this.AfterPlayerCheckCard(result);
         });
+        // 玩家弃牌后更新状态
+        this.sockets.subscribe("AFTER_PLAYER_FOLD_CARD", (result) => {
+            this.AfterPlayerFoldCard(result);
+        });
         // 更新游戏阶段
         this.socket.subscribe("CHANGE_GAME_STAGE", (result)=>{
             this.OnChangeGameStage(result);
@@ -389,11 +393,15 @@ export default {
                 this.GameData.MyInfos.Status = PlayerStatus;
                 this.GameData.CurrentPlayerIndex = CurrentPlayerIndex;
             }
-            // else if (CurrentStage == "JUDGE")
-            // {
-            //     const {PlayerStatus} = res;
-            //     this.GameData.MyInfos.Status = PlayerStatus;
-            // }
+            else if (CurrentStage == "JUDGE")
+            {
+                const {PlayerStatus} = res;
+                this.GameData.MyInfos.Status = PlayerStatus;
+            }
+            else if (CurrentStage == "CALC")
+            {
+                
+            }
         },
 
         AfterPlayerEndBet(res)
@@ -442,6 +450,38 @@ export default {
             else
             {
                 // 过牌失败 显示错误信息
+                this.$message({
+                    showClose: false,
+                    // TODO: erro message code to chinese
+                    message: ErrorMessage,
+                    type: 'error'
+                });
+            }
+        },
+
+        AfterPlayerFoldCard(res)
+        {
+            const {IsSuccess, ErrorMessage, Data} = res;
+            if (IsSuccess)
+            {
+                const {CurrentPlayerIndex, PrevPlayerIndex, PrevPlayerStatus} = Data;
+
+                if (PrevPlayerIndex == this.GameData.Index)
+                {
+                    this.GameData.MyInfos.Status = PrevPlayerStatus;
+                }
+                else
+                {
+                    const pIdx = this.GameData.OtherPlayerList.findIndex(
+                        (obj) => obj.Index == PrevPlayerIndex
+                    );
+                    this.GameData.OtherPlayerList[pIdx].Status = PrevPlayerStatus;
+                }
+                this.GameData.CurrentPlayerIndex = CurrentPlayerIndex;
+            }
+            else
+            {
+                // 弃牌失败 显示错误信息
                 this.$message({
                     showClose: false,
                     // TODO: erro message code to chinese

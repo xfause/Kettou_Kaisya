@@ -29,7 +29,13 @@ Server -> Client "ACTIVE_CARD_EFFECT"
     Type:
         JUDGE_CARD_AFTER_PLAYER_BET_STAGE
         JUDGE_CARD_BEFORE_PLAYER_CHECK_CARD
+        JUDGE_CARD_AFTER_PLAYER_CHECK_CARD
+        JUDGE_CARD_BEFORE_PLAYER_FOLD_CARD
+        JUDGE_CARD_AFTER_PLAYER_FOLD_CARD
+        JUDGE_CARD_BEFORE_JUDGE_STAGE
+        JUDGE_CARD_AFTER_JUDGE_STAGE
         HAND_CARD_AFTER_PLAYER_GET
+        
     Data: Full Game Data
 }
 
@@ -80,5 +86,18 @@ Server -> Client "AFTER_PLAYER_CHECK_CARD"
         PrevPlayerTempCredit
         PrevPlayerHandCardsNum
     }
+}
+
+// 发送获胜角斗士ID
+Server -> Client "WIN_FIGHTER_ID"
+{
+    WinFighterId
+}
+
+// 玩家弃牌
+Client -> Server "PLAYER_FOLD_CARD"
+{
+    RoomNumber
+    PlayerIndex
 }
 ```

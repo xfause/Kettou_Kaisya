@@ -94,7 +94,7 @@ export default {
         },
         OnFoldCard(){
             this.$socket.emit("COMMAND",{
-                type:"FOLD_CARD",
+                type:"PLAYER_FOLD_CARD",
                 RoomNumber: this.RoomNumber,
                 PlayerIndex: this.PlayerIndex
             });
