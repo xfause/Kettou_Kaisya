@@ -8,7 +8,8 @@ const NormalConfig = {
     RoundLimit: 4,
     RoundInitCredit: 5000,
     MaxBetFighterCount: 3,
-    MinBetCredit: 500
+    MinBetCredit: 500,
+    WinCreditForRank: [12, 8, 5, 0],
 }
 
 module.exports = {

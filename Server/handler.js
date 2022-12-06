@@ -539,6 +539,7 @@ function OnCalcStage(RoomNumber)
 
     GameData = UpdataCardEffect.ActiveJudgeCardBeforeCalcStage(GameData);
 
+    // TODO
     // 计算获胜角斗士ID
     let WinFighterId = GetWinFighterId(GameData);
 
@@ -553,9 +554,7 @@ function OnCalcStage(RoomNumber)
     // 计算WinCredit和TempCredit
     CalculateCredit(RoomNumber, WinFighterId);
 
-    GameData = CacheRoomsData[RoomNumber];
-    GameData = UpdataCardEffect.ActiveJudgeCardAfterCalcStage(GameData);
-    CacheRoomsData[RoomNumber] = GameData;
+    CacheRoomsData[RoomNumber] = UpdataCardEffect.ActiveJudgeCardAfterCalcStage( CacheRoomsData[RoomNumber]);
 
     if (GameData.CurrentRound == GameData.RoomConfig.RoundLimit)
     {
@@ -570,12 +569,102 @@ function OnCalcStage(RoomNumber)
 
 }
 
+function GetWinFighterId(GameData)
+{
+    return 0;
+}
+
 function CalculateCredit(RoomNumber, WinFighterId)
 {
-    let GameData = CacheRoomsData[RoomNumber]
-    //TODO
+    let GameData = CacheRoomsData[RoomNumber];
+    let WinFighterIndexInList = GameData.FighterInfoList.findIndex(b=>b.Id == WinFighterId);
+    let WinFighterInfo = GameData.FighterInfoList[WinFighterIndexInList];
+    let RoundRankList = [];
+    
+    // 统计下注收益
+    GameData.PlayerList.map(player=>{
+        let TempBetCredit = 0;
+        let bIsBetOnWinFighterIndex = player.BetDetails.findIndex(b=>b.FighterId == WinFighterId);
+        if (bIsBetOnWinFighterIndex != -1)
+        {
+            let BetDetail = player.BetDetails[bIsBetOnWinFighterIndex];
+            switch (player.BetDetails.length) {
+                case 3:
+                    TempBetCredit = 1.0;
+                    break;
+                case 2:
+                    TempBetCredit = 1.5;
+                    break;
+                case 1:
+                    TempBetCredit = 2.0;
+                default:
+                    break;
+            }
+            RoundRankList.push({
+                PlayerIndex: player.Index,
+                TempBetCredit: TempBetCredit * BetDetail.BetCredit * WinFighterInfo.CreditFactor,
+                TotalWinCredit: player.WinCredit,
+                TempWinCredit: 0,
+                Rank: -1,
+            })
+        }
+    })
 
+    // 统计公共奖池收益
+    if (RoundRankList.length > 0)
+    {
+        RoundRankList.map(pb=>{
+            pb.TempBetCredit += GameData.PublicJackpot / RoundRankList.length
+        })
+    }
 
+    // 累加剩余资金
+    GameData.PlayerList.map(player=>{
+        let bIsPlayerCorrect = RoundRankList.findIndex(b=>b.PlayerIndex == player.Index);
+        if (bIsPlayerCorrect != -1)
+        {
+            RoundRankList[bIsPlayerCorrect].TempBetCredit += player.TempCredit;
+        }
+        else
+        {
+            RoundRankList.push({
+                PlayerIndex: player.Index,
+                TempBetCredit: player.TempBetCredit,
+                TotalWinCredit: player.WinCredit,
+                TempWinCredit: 0,
+                Rank: -1,
+            })
+        }
+    })
+
+    //计算胜点
+    RoundRankList.sort((a, b)=>{
+        return parseFloat(a.TempBetCredit) - parseFloat(b.TempBetCredit);
+    });
+    RoundRankList.map((obj, index)=>{
+        let pIndex = GameData.PlayerList.findIndex(p=>p.Index == obj.PlayerIndex);
+        if (index < GameData.RoomConfig.WinCreditForRank.length)
+        {
+            let Credit = GameData.RoomConfig.WinCreditForRank[index];
+            RoundRankList[index].TempWinCredit = Credit;
+            RoundRankList[index].TotalWinCredit += Credit;
+            RoundRankList[index].Rank = index + 1,
+            GameData.PlayerList[pIndex].WinCredit += Credit;
+        }
+        else 
+        {
+            RoundRankList[index].TempWinCredit = 0;
+            RoundRankList[index].TotalWinCredit += 0;
+            RoundRankList[index].Rank = index + 1,
+            GameData.PlayerList[pIndex].WinCredit += 0;
+        }
+    })
+
+    GameData.PlayerList.map(p=>{
+        p.Socket.emit("SETTLE_IN_ROUND",{
+            RoundRankList
+        })
+    })
 
     CacheRoomsData[RoomNumber] = GameData;
 }
@@ -583,7 +672,26 @@ function CalculateCredit(RoomNumber, WinFighterId)
 function OnGameEnd(RoomNumber)
 {
     let GameData = CacheRoomsData[RoomNumber];
-    // TODO
+    let RankList = [];
+    GameData.PlayerList.map(p=>{
+        RankList.push({
+            PlayerIndex: p.Index,
+            WinCredit: p.WinCredit
+        })
+    })
+    RankList.sort((a, b)=>{
+        return parseFloat(a.WinCredit) - parseFloat(b.WinCredit);
+    });
+    RankList.map((r, index)=>{
+        r.Rank = index+1;
+    })
+    GameData.PlayerList.map(p=>{
+        p.Socket.emit("SETTLE_ON_GAME_END", {
+            RankList
+        })
+    })
+
+    CacheRoomsData[RoomNumber] = GameData;
 }
 
 function InitNewRound(RoomNumber)

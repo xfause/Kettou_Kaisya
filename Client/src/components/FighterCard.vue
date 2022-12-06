@@ -48,6 +48,12 @@
             <div>已下注:{{CreditBetOnCurrFighter}}</div>
           </div>
         </div>
+        <div 
+          v-if ="IsWinInRound"
+          class="fighter-win-bottom"
+        >
+          获胜
+        </div>
       </el-popover>
     </div>
     <div v-if="this.Fighter == null">
@@ -74,6 +80,7 @@ export default {
     FighterBetDetails: Array,
     FighterStatusList: Array,
     MaxBetFighterCount: Number,
+    WinFighterId: Number,
   },
   data() 
   {
@@ -148,6 +155,12 @@ export default {
       } else {
         return "N/A";
       }
+    },
+    IsWinInRound() {
+      if (this.WinFighterId == this.Fighter.Id) {
+        return true;
+      }
+      return false;
     },
     IsCreditEnoughBetOnce() 
     {

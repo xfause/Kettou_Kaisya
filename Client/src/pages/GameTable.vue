@@ -59,6 +59,7 @@
                         :CurrentPlayerIndex="GameData.CurrentPlayerIndex"
                         :RoomNumber="GameData.RoomNumber" 
                         :FighterStatusList="GameData.FighterStatusList"
+                        :WinFighterId="GameData.WinFighterId"
                         :PlayerTempCredit="GameData.MyInfos.TempCredit" 
                         :MinBetCredit="GameConfig.MinBetCredit" 
                         :MaxBetFighterCount="GameConfig.MaxBetFighterCount" 
@@ -149,6 +150,8 @@ import JudgerCard from "../components/JudgerCard.vue";
 import FighterCard from "../components/FighterCard.vue";
 import TableCard from "../components/TableCard.vue";
 import PlayerBasicInfo from "../components/PlayerBasicInfo.vue";
+import RoundRankList from "../components/RoundRankList.vue";
+import GameEndRankList from "../components/GameEndRankList.vue";
 
 export default {
     name: "GameTable",
@@ -158,7 +161,9 @@ export default {
         JudgerCard,
         FighterCard,
         TableCard,
-        PlayerBasicInfo
+        PlayerBasicInfo,
+        RoundRankList,
+        GameEndRankList
     },
 
     data() {
@@ -258,6 +263,14 @@ export default {
         this.socket.subscribe("CHANGE_GAME_STAGE", (result)=>{
             this.OnChangeGameStage(result);
         });
+        // 更新每回合获胜角斗士ID
+        this.socket.subscribe("WIN_FIGHTER_ID", (result)=>{
+            this.OnGetWinFighter(result);
+        })
+        // 更新每回合资金/胜点等数据
+        this.socket.subscribe("SETTLE_IN_ROUND", (result)=>{
+            this.OnRoundEnd(result)
+        })
 
         // 前端设置 =============================================================
         // 设置页面
@@ -400,10 +413,11 @@ export default {
             }
             else if (CurrentStage == "CALC")
             {
-                
+
             }
         },
 
+        // 玩家结束下注后数据更新
         AfterPlayerEndBet(res)
         {
             const {PrevPlayerStatus, PrevPlayerIndex, CurrentPlayerIndex} = res;
@@ -421,6 +435,7 @@ export default {
             }
         },
 
+        // 玩家过牌后数据更新
         AfterPlayerCheckCard(res)
         {
             const {IsSuccess, ErrorMessage, Data} = res;
@@ -459,6 +474,7 @@ export default {
             }
         },
 
+        // 玩家弃牌后数据更新
         AfterPlayerFoldCard(res)
         {
             const {IsSuccess, ErrorMessage, Data} = res;
@@ -489,6 +505,36 @@ export default {
                     type: 'error'
                 });
             }
+        },
+        // 展示本回合获胜角斗士
+        OnGetWinFighter(res)
+        {
+            const {WinFighterId} = res;
+            this.GameData.WinFighterId = WinFighterId;
+        },
+
+        // 回合结束后展示排行
+        OnRoundEnd(res)
+        {
+            const { RoundRankList } = res;
+            this.GameData.RankList = RoundRankList
+            this.$msgbox({
+                title: "回合结算",
+                message: <RoundRankList ref="RoundRankList"/>,
+                data: this.GameData.RankList
+            })
+        },
+
+        // 游戏结束后展示排行
+        OnGameEnd(res)
+        {
+            const {RankList} = res;
+            this.GameData.RankList = RankList
+            this.$msgbox({
+                title: "回合结算",
+                message: <GameEndRankList ref="GameEndRankList"/>,
+                data: this.GameData.RankList
+            })
         },
 
         // tool functions 工具方法 ===========================

@@ -2,6 +2,16 @@
     width: 25%;
     background-color: white;
 }
-.bet_fighter_credit_input {
-    width: 100% !important;
+.fighter-win-bottom{
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+    background: #394950;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 10px;
+    color: white;
+    box-sizing: border-box;
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
 }

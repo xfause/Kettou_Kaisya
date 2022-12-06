@@ -88,16 +88,28 @@ Server -> Client "AFTER_PLAYER_CHECK_CARD"
     }
 }
 
+// 玩家弃牌
+Client -> Server "PLAYER_FOLD_CARD"
+{
+    RoomNumber
+    PlayerIndex
+}
+
 // 发送获胜角斗士ID
 Server -> Client "WIN_FIGHTER_ID"
 {
     WinFighterId
 }
 
-// 玩家弃牌
-Client -> Server "PLAYER_FOLD_CARD"
+// 发送每回合结算胜点/临时资金等数据
+Server -> Client "SETTLE_IN_ROUND"
 {
-    RoomNumber
-    PlayerIndex
+    RoundRankList
+}
+
+// 发送每回合结算胜点/临时资金等数据
+Server -> Client "SETTLE_ON_GAME_END"
+{
+    RankList
 }
 ```
