@@ -9,12 +9,12 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'gameTable',
+      name: 'GameTable',
       component: GameTable
     },
     {
-      path: '/login',
-      name: 'login',
+      path: '/Login',
+      name: 'Login',
       component: Login
     }
   ]

@@ -1,4 +1,9 @@
 ```js
+// 游戏开始
+Serve -> Client : "GAME_START"
+{
+    RoomNumber
+}
 //下注角斗士
 Client -> Server : "BET_ON_FIGHTER"
 {

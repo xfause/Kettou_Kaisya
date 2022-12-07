@@ -31,6 +31,7 @@
     CurrentRound: "int / 当前是第几回合",
     // "PREPARE / BET / CARD / JUDGE / CALC"
     CurrentStage: "String / 当前游戏阶段"
+    WinFighterId: "int / 获胜角斗士id"
 
     // 裁判牌信息
     JudgerCardInfo: "JudgeCard / 裁判牌",
@@ -84,22 +85,14 @@
     // 如果没有对应效果则没有该项
     // 获取卡牌后
     OnAfterGetCard: "Func / (RoomData) / return RoomData",
-    // 使用卡牌前
-    OnBeforeUseCard: "Func / (RoomData) / return RoomData",
     // 使用卡牌后
     OnAfterUseCard: "Func / (RoomData) / return RoomData",
-    // 使用其他卡牌前
-    OnBeforeUseOtherCard: "Func / (RoomData) / return RoomData",
-    // 使用其他卡牌后
+    // 其他卡牌使用后
     OnAfterUseOtherCard: "Func / (RoomData) / return RoomData",
-    // 卡牌在判定阶段亮牌前
-    OnBeforeCardActive: "Func / (RoomData) / return RoomData",
     // 卡牌在判定阶段亮牌后
-    OnAfterCardActive: "Func / (RoomData) / return RoomData",
-    // 卡牌在判定阶段其他卡牌亮牌前
-    OnBeforeOtherCardActive: "Func / (RoomData) / return RoomData",
+    OnAfterCardActiveInJudgeStage: "Func / (RoomData) / return RoomData",
     // 卡牌在判定阶段其他卡牌亮牌后
-    OnAfterOtherCardActive: "Func / (RoomData) / return RoomData",
+    OnAfterOtherCardActiveInJudgeStage: "Func / (RoomData) / return RoomData",
 }
 ```
 
@@ -153,7 +146,10 @@
     Magic: "int / 临时魔法值",
     ConstBuffList: ["String / 角斗士永久BUFF词条"],
     TempBuffList: ["String / 角斗士临时BUFF词条"],
+    InitConstBuffList: ["String / 初始角斗士永久BUFF词条"],
+    InitTempBuffList: ["String / 初始角斗士临时BUFF词条"],
     CreditFactor: "int / 赏金倍率",
+    InitCreditFactor: "int / 初始赏金倍率",
     BetDetails: [{
         BetPlayerIndex: "String / 下注的玩家编号",
         BetCredit: "int / 下注的金额"

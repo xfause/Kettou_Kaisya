@@ -11,6 +11,6 @@ prototype stage now
 * express
 * mongodb （todo）
 
-nodemon app.js
+Server: npm run dev
 
-npm run serve  
+Client: npm run serve  

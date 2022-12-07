@@ -22,7 +22,6 @@ const {
 } = require("./Resources/RoomConfig");
 
 // Import functionality
-// TODO
 let ToolFuncs = require("./Scripts/Tools")
 let UpdataCardEffect = require("./Scripts/UpdateCardEffect");
 
@@ -121,7 +120,7 @@ function ConnectToRoom(args, socket, socketServer)
             CacheRoomsData[RoomNumber].PlayerList = PlayerList;
             // 发送开始事件
             CacheRoomsData[RoomNumber].PlayerList.map(p => {
-                p.Socket.emit("START", {
+                p.Socket.emit("GAME_START", {
                     RoomNumber,
                     Index: p.Index,
                 });
@@ -135,7 +134,6 @@ function ConnectToRoom(args, socket, socketServer)
 // 初始化游戏数据
 function InitGameData(RoomNumber)
 {
-    let random = Math.floor(CacheRoomsData[RoomNumber].rand() * RoomPlayerLimit);
     let GameData = {};
     GameData.Seed = CacheRoomsData[RoomNumber].Seed;
     GameData.RandFunc = CacheRoomsData[RoomNumber].RandFunc;
@@ -147,23 +145,11 @@ function InitGameData(RoomNumber)
     GameData.CurrentRound = 1;
     GameData.PublicJackpot = 0;
     GameData.CurrentStage = "BET";
+    GameData.WinFighterId = -1;
     // 生成初始角斗士列表
-    let TmpFighterList = [...FighterList];
-    let InitFighterList = [];
-    for (let fIdx=0; fIdx < GameData.RoomConfig.FighterCountLimit; fIdx++)
-    {
-        let randIdx = Math.floor(Math.random() * TmpFighterList.length);
-        let f = TmpFighterList.splice(randIdx, 1)[0];
-        Object.assign(f, {
-            BetDetails: []
-        })
-        InitFighterList.push(f)
-    }
-    GameData.FighterInfoList = InitFighterList;
+    GameData.FighterInfoList = [...ToolFuncs.GetRandomNewFighters(FighterList, GameData.RoomConfig.FighterCountLimit)];
     // 添加裁判牌
-    let TmpJudgerList = [...JudgerList];
-    var RandJudgerIndex = Math.floor(Math.random() * TmpJudgerList.length);
-    GameData.JudgerCardInfo = TmpJudgerList.splice(RandJudgerIndex, 1)[0];
+    GameData.JudgerCardInfo = ToolFuncs.GetRandomNewJudger(JudgerList);
     // 清空桌面牌队列
     GameData.TableCardList = [];
     // 初始化玩家数据
@@ -199,7 +185,7 @@ function RestoreGameData(RoomNumber, UserUid)
         Seed, RandFunc, FighterStatusList, 
         PublicJackpot, CurrentStage, CurrentRound, 
         CurrentPlayerIndex, JudgerCardInfo, FighterInfoList,
-        TableCardList, PlayerList, RoomConfig
+        TableCardList, PlayerList, RoomConfig, WinFighterId
     } = GameData;
 
     let player =PlayerList.map(p => p.UserUid === UserUid)[0];
@@ -219,6 +205,7 @@ function RestoreGameData(RoomNumber, UserUid)
         Seed, RandFunc, PublicJackpot, CurrentStage, 
         CurrentRound, FighterStatusList, CurrentPlayerIndex,
         RoomConfig, JudgerCardInfo, FighterInfoList, TableCardList,
+        WinFighterId,
         HandCards: player.HandCards,
         RemainCardsNum: player.RemainCards.length,
         MyInfos: {
@@ -533,29 +520,30 @@ function OnJudgeTableCards(RoomNumber)
     OnCalcStage(RoomNumber)
 }
 
+// 判定阶段结束 进入结算阶段
 function OnCalcStage(RoomNumber)
 {
     let GameData = CacheRoomsData[RoomNumber];
 
     GameData = UpdataCardEffect.ActiveJudgeCardBeforeCalcStage(GameData);
 
-    // TODO
     // 计算获胜角斗士ID
     let WinFighterId = GetWinFighterId(GameData);
 
+    CacheRoomsData[RoomNumber].WinFighterId = WinFighterId;
+
+    CacheRoomsData[RoomNumber] = UpdataCardEffect.ActiveJudgeCardAfterCalcStage(CacheRoomsData[RoomNumber]);
+
     GameData.PlayerList.map(p=>{
         p.Socket.emit("WIN_FIGHTER_ID", {
-            WinFighterId
+            WinFighterId: CacheRoomsData[RoomNumber].WinFighterId
         })
     })
 
-    CacheRoomsData[RoomNumber] = GameData;
-
     // 计算WinCredit和TempCredit
-    CalculateCredit(RoomNumber, WinFighterId);
+    CalculateCredit(RoomNumber, CacheRoomsData[RoomNumber].WinFighterIdWinFighterId);
 
-    CacheRoomsData[RoomNumber] = UpdataCardEffect.ActiveJudgeCardAfterCalcStage( CacheRoomsData[RoomNumber]);
-
+    GameData = CacheRoomsData[RoomNumber]
     if (GameData.CurrentRound == GameData.RoomConfig.RoundLimit)
     {
         // 游戏结束
@@ -569,11 +557,21 @@ function OnCalcStage(RoomNumber)
 
 }
 
+// 计算获胜角斗士ID
 function GetWinFighterId(GameData)
 {
-    return 0;
+    let WinFighterIndex = 0;
+    let MaxHealth = -99999;
+    for (let i = 0; i < GameData.FighterInfoList.length; i++) {
+    if (GameData.FighterInfoList[i].Health > MaxHealth) {
+            WinFighterIndex = i;
+            MaxHealth = GameData.FighterInfoList[i].Health;
+        }
+    }
+    return GameData.FighterInfoList[WinFighterIndex].Id;
 }
 
+// 计算WinCredit和TempCredit
 function CalculateCredit(RoomNumber, WinFighterId)
 {
     let GameData = CacheRoomsData[RoomNumber];
@@ -669,6 +667,7 @@ function CalculateCredit(RoomNumber, WinFighterId)
     CacheRoomsData[RoomNumber] = GameData;
 }
 
+// 游戏结束
 function OnGameEnd(RoomNumber)
 {
     let GameData = CacheRoomsData[RoomNumber];
@@ -694,8 +693,35 @@ function OnGameEnd(RoomNumber)
     CacheRoomsData[RoomNumber] = GameData;
 }
 
+// 初始化下一回合数据
 function InitNewRound(RoomNumber)
 {
     let GameData = CacheRoomsData[RoomNumber];
-    // TODO
+
+    GameData.CurrentRound ++;
+    GameData.CurrentStage = "BET";
+    GameData.WinFighterId = -1;
+    GameData.StartPlayerIndex = GameData.PlayerList[(GameData.StartPlayerIndex + 1) % GameData.RoomConfig.RoomPlayerLimit].Index;
+    GameData.CurrentPlayerIndex = GameData.StartPlayerIndex;
+    GameData.JudgerCardInfo = ToolFuncs.GetRandomNewJudger(JudgerList);
+    GameData.PublicJackpot = 0;
+    GameData.TableCardList = [];
+    GameData.FighterInfoList = [...ToolFuncs.GetRandomNewFighters(FighterList, GameData.RoomConfig.FighterCountLimit)];
+
+    GameData.PlayerList.map(p=>{
+        p.Status ="NOT_BETED";
+        p.BetDetails = [];
+        p.TempCredit = GameData.RoomConfig.RoundInitCredit;
+        p.HandCards = [];
+        p.RemainCards = shuffle(GameData.RandFunc, CardList.map((c, index) => Object.assign({ k: index }, c)));
+        for (let cIdx = 0; cIdx < GameData.RoomConfig.InitHandCardCount; cIdx++) {
+            let card = ToolFuncs.GetNextCard(p.RemainCards)
+            if (card !== null) {
+                p.HandCards.push(card);
+            }
+        }
+    })
+
+    CacheRoomsData[RoomNumber] = GameData;
+    ToolFuncs.SendInitDataToAllPlayer(GameData);
 }

@@ -1,5 +1,5 @@
 const NormalConfig = {
-    RoomPlayerLimit: 4,
+    RoomPlayerLimit: 1,
     HandCardCountLimit: 10,
     InitHandCardCount: 3,
     FighterCountLimit: 4,

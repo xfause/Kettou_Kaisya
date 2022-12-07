@@ -148,8 +148,10 @@ import OtherPlayerInfo from "../components/OtherPlayerInfo";
 import RoomInfo from "../components/RoomInfo.vue";
 import JudgerCard from "../components/JudgerCard.vue";
 import FighterCard from "../components/FighterCard.vue";
+import Card from "../components/Card.vue";
 import TableCard from "../components/TableCard.vue";
 import PlayerBasicInfo from "../components/PlayerBasicInfo.vue";
+import RemainCards from "../components/RemainCards.vue";
 import RoundRankList from "../components/RoundRankList.vue";
 import GameEndRankList from "../components/GameEndRankList.vue";
 
@@ -159,11 +161,11 @@ export default {
         OtherPlayerInfo,
         RoomInfo,
         JudgerCard,
+        Card,
         FighterCard,
         TableCard,
         PlayerBasicInfo,
-        RoundRankList,
-        GameEndRankList
+        RemainCards,
     },
 
     data() {
@@ -225,6 +227,11 @@ export default {
         this.sockets.subscribe("WAITE", () => {
             this.IsShowSearchMatchDialog = true;
         });
+        // 游戏开始
+        this.sockets.subscribe("GAME_START", (result) => {
+            this.IsShowSearchMatchDialog = false;
+            this.GameData.RoomNumber = result.RoomNumber;
+        });
         // 重连到房间
         this.sockets.subscribe("RECONNECT_TO_ROOM", (result) => {
             this.GameData.RoomNumber = result.RoomNumber;
@@ -260,15 +267,15 @@ export default {
             this.AfterPlayerFoldCard(result);
         });
         // 更新游戏阶段
-        this.socket.subscribe("CHANGE_GAME_STAGE", (result)=>{
+        this.sockets.subscribe("CHANGE_GAME_STAGE", (result)=>{
             this.OnChangeGameStage(result);
         });
         // 更新每回合获胜角斗士ID
-        this.socket.subscribe("WIN_FIGHTER_ID", (result)=>{
+        this.sockets.subscribe("WIN_FIGHTER_ID", (result)=>{
             this.OnGetWinFighter(result);
         })
         // 更新每回合资金/胜点等数据
-        this.socket.subscribe("SETTLE_IN_ROUND", (result)=>{
+        this.sockets.subscribe("SETTLE_IN_ROUND", (result)=>{
             this.OnRoundEnd(result)
         })
 
@@ -293,13 +300,15 @@ export default {
                 PublicJackpot, CurrentStage, FighterStatusList,
                 CurrentRound, RoomConfig, CurrentPlayerIndex,
                 JudgerCardInfo, FighterInfoList, TableCardList,
-                HandCards, RemainCardsNum, MyInfos, OtherPlayerList
+                HandCards, RemainCardsNum, MyInfos, OtherPlayerList,
+                WinFighterId,
             } = result;
             this.GameData.PublicJackpot = PublicJackpot;
             this.GameData.CurrentStage = CurrentStage;
             this.GameData.FighterStatusList = FighterStatusList || [];
             this.GameData.CurrentRound = CurrentRound;
             this.GameData.CurrentPlayerIndex = CurrentPlayerIndex;
+            this.GameData.WinFighterId = WinFighterId;
             this.GameData.JudgerCardInfo = JudgerCardInfo;
             this.GameData.FighterInfoList = FighterInfoList.sort(function (a, b) {
                 return parseFloat(a.Id) - parseFloat(b.Id);
@@ -319,7 +328,7 @@ export default {
                 RoomConfig, FighterStatusList, RoomNumber,
                 CurrentPlayerIndex, JudgerCardInfo, FighterInfoList,
                 TableCardList, HandCards, RemainCardsNum,
-                MyInfos, OtherPlayerList
+                MyInfos, OtherPlayerList, WinFighterId
             } = result;
             this.GameData.PublicJackpot = PublicJackpot;
             this.GameData.CurrentStage = CurrentStage;
@@ -327,6 +336,7 @@ export default {
             this.GameData.RoomNumber = RoomNumber;
             this.GameData.CurrentRound = CurrentRound;
             this.GameData.CurrentPlayerIndex = CurrentPlayerIndex;
+            this.GameData.WinFighterId = WinFighterId;
             this.GameData.JudgerCardInfo = JudgerCardInfo;
             this.GameData.FighterInfoList = FighterInfoList.sort(function (a, b) {
                 return parseFloat(a.id) - parseFloat(b.id);
@@ -413,7 +423,7 @@ export default {
             }
             else if (CurrentStage == "CALC")
             {
-
+                // DO NOTHING EXTRA
             }
         },
 
@@ -422,16 +432,19 @@ export default {
         {
             const {PrevPlayerStatus, PrevPlayerIndex, CurrentPlayerIndex} = res;
             this.GameData.CurrentPlayerIndex = CurrentPlayerIndex
-            if (PrevPlayerIndex == Index)
+            if (PrevPlayerIndex == this.GameData.Index)
             {
                 this.GameData.MyInfos.Status = PrevPlayerStatus;
             }
             else
             {
                 const pIndex = this.GameData.OtherPlayerList.findIndex(
-                    (obj) => obj.Index == p.PrevPlayerStatus
+                    (obj) => obj.Index == PrevPlayerIndex
                 );
-                this.GameData.OtherPlayerList[pIndex].Status = PrevPlayerStatus;
+                if (pIndex != -1)
+                {
+                    this.GameData.OtherPlayerList[pIndex].Status = PrevPlayerStatus;
+                }
             }
         },
 
@@ -516,8 +529,7 @@ export default {
         // 回合结束后展示排行
         OnRoundEnd(res)
         {
-            const { RoundRankList } = res;
-            this.GameData.RankList = RoundRankList
+            this.GameData.RankList = res.RoundRankList
             this.$msgbox({
                 title: "回合结算",
                 message: <RoundRankList ref="RoundRankList"/>,
@@ -528,8 +540,7 @@ export default {
         // 游戏结束后展示排行
         OnGameEnd(res)
         {
-            const {RankList} = res;
-            this.GameData.RankList = RankList
+            this.GameData.RankList = res.RankList
             this.$msgbox({
                 title: "回合结算",
                 message: <GameEndRankList ref="GameEndRankList"/>,

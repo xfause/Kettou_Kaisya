@@ -47,7 +47,10 @@ const FighterList = [{
     Magic: 0,
     ConstBuffList: ["NO_HIT"],
     TempBuffList: [],
+    InitConstBuffList: ["NO_HIT"],
+    InitTempBuffList: [],
     CreditFactor: 1.0,
+    InitCreditFactor: 1.0,
 }, {
     Id: 2,
     Name: "稳定的能量体",
@@ -58,7 +61,10 @@ const FighterList = [{
     Magic: 5,
     ConstBuffList: ["HALF_MAGIC"],
     TempBuffList: [],
+    InitConstBuffList: ["HALF_MAGIC"],
+    InitTempBuffList: [],
     CreditFactor: 1.0,
+    InitCreditFactor: 1.0,
 }, {
     Id: 3,
     Name: "丑陋的魅魔",
@@ -69,7 +75,10 @@ const FighterList = [{
     Magic: 0,
     ConstBuffList: [],
     TempBuffList: [],
+    InitConstBuffList: [],
+    InitTempBuffList: [],
     CreditFactor: 1.0,
+    InitCreditFactor: 1.0,
 }, {
     Id: 4,
     Name: "开心的暗影怪",
@@ -80,7 +89,10 @@ const FighterList = [{
     Magic: -2,
     ConstBuffList: ["NUM_OPPOSITE"],
     TempBuffList: [],
+    InitConstBuffList: ["NUM_OPPOSITE"],
+    InitTempBuffList: [],
     CreditFactor: 1.0,
+    InitCreditFactor: 1.0,
 }];
 
 module.exports = {

@@ -72,7 +72,7 @@
     top: 0px;
   }
   
-  .my_remain_cards_info {
+  .player_remain_cards_info {
     background-color: grey;
     width: 200px;
     height: 100%;
@@ -81,7 +81,7 @@
     top: 0px;
   }
   
-  .my_hand_cards {
+  .player_hand_cards {
     height: 100%;
     margin-left: 200px;
     margin-right: 200px;

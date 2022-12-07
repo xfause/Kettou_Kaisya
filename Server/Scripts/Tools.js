@@ -26,7 +26,7 @@ function SendInitDataToAllPlayer(GameData)
         RoomConfig
     } = GameData;
     PlayerList.map((p)=>{
-        let cIndex = PlayerList.findIndex(obj => obj.UserUid == u.UserUid);
+        let cIndex = PlayerList.findIndex(obj => obj.UserUid == p.UserUid);
         let CurrPlayer = PlayerList[cIndex];
         let CurrentPlayerHandCards = CurrPlayer.HandCards;
         let CurrentPlayerRemainCardsNum = CurrPlayer.RemainCards.length;
@@ -85,6 +85,39 @@ function GetNextPlayerIndex(CurrPlayerIndex, PlayerList, RoomPlayerLimit, Type="
     return PlayerList[pIndex].Index;
 }
 
+function GetRandomNewJudger(JudgerList)
+{
+    let TmpJudgerList = [...JudgerList];
+    var RandJudgerIndex = Math.floor(Math.random() * TmpJudgerList.length);
+    return TmpJudgerList.splice(RandJudgerIndex, 1)[0];
+}
+
+function GetRandomNewFighters(FighterList, FighterCountLimit)
+{
+    let TmpFighterList = [...FighterList];
+    for (let i = 0; i < TmpFighterList.length; i++){
+        TmpFighterList[i].Health = TmpFighterList[i].InitHealth;
+        TmpFighterList[i].Magic = TmpFighterList[i].InitMagic;
+        TmpFighterList[i].ConstBuffList = TmpFighterList[i].InitConstBuffList;
+        TmpFighterList[i].TempBuffList = TmpFighterList[i].InitTempBuffList;
+        TmpFighterList[i].CreditFactor = TmpFighterList[i].InitCreditFactor;
+        TmpFighterList[i].BetDetails = [];
+    }
+    let InitFighterList = [];
+    for (let fIdx=0; fIdx < FighterCountLimit; fIdx++)
+    {
+        let randIdx = Math.floor(Math.random() * TmpFighterList.length);
+        let f = TmpFighterList.splice(randIdx, 1)[0];
+        Object.assign(f, {
+            BetDetails: []
+        })
+        InitFighterList.push(f)
+    }
+    return InitFighterList;
+}
+
 exports.GetNextCard = GetNextCard;
 exports.SendInitDataToAllPlayer = SendInitDataToAllPlayer;
 exports.GetNextPlayerIndex = GetNextPlayerIndex;
+exports.GetRandomNewJudger = GetRandomNewJudger;
+exports.GetRandomNewFighters = GetRandomNewFighters;
