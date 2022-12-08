@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div>回合:{{CurrentRound}}/{{RoundNumLimit}}</div>
+        <div>回合:{{CurrentRound}}/{{RoundLimit}}</div>
         <div>公共奖池:{{PublicJackpot}}</div>
         <div>当前阶段:{{Str_stage}}阶段</div>
     </div>
@@ -11,7 +11,7 @@ export default {
     name: "RoomInfo",
     props: {
         CurrentRound: Number, // current round
-        RoundNumLimit: Number, // total rounds
+        RoundLimit: Number, // total rounds
         PublicJackpot: Number, // jackpot money
         CurrentStage: String, // jackpot money
     },

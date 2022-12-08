@@ -9,7 +9,7 @@ function GetNextCard(RemainCards)
 }
 
 //发送数据给所有玩家
-function SendInitDataToAllPlayer(GameData)
+function SendInitDataToAllPlayer(GameData, RoomNumber)
 {
     const {
         Seed, 
@@ -56,7 +56,7 @@ function SendInitDataToAllPlayer(GameData)
             CurrentRound, 
             RoomConfig,
             FighterStatusList,
-            RoomNumber: GameData.RoomNumber,
+            RoomNumber: RoomNumber,
             CurrentPlayerIndex,
             JudgerCardInfo, FighterInfoList, TableCardList,
             HandCards: CurrentPlayerHandCards,

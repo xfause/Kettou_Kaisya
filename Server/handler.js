@@ -45,10 +45,13 @@ module.exports = function handleSynchronousClient(args, socket, socketServer)
             break;
         case "PLAYER_END_BET_FIGHTERS":
             OnPlayerEndBetFighters(args, socket);
+            break;
         case "PLAYER_CHECK_CARD":
             OnPlayerCheckCard(args, socket);
+            break;
         case "PLAYER_FOLD_CARD":
             OnPlayerFoldCard(args, socket);
+            break;
     }
 }
 
@@ -150,6 +153,7 @@ function InitGameData(RoomNumber)
     GameData.FighterInfoList = [...ToolFuncs.GetRandomNewFighters(FighterList, GameData.RoomConfig.FighterCountLimit)];
     // 添加裁判牌
     GameData.JudgerCardInfo = ToolFuncs.GetRandomNewJudger(JudgerList);
+    GameData.JudgerCardInfo.IsActive = false;
     // 清空桌面牌队列
     GameData.TableCardList = [];
     // 初始化玩家数据
@@ -175,7 +179,7 @@ function InitGameData(RoomNumber)
     // 重新缓存
     CacheRoomsData[RoomNumber] = GameData;
     // 发送数据给所有玩家
-    ToolFuncs.SendInitDataToAllPlayer(GameData);
+    ToolFuncs.SendInitDataToAllPlayer(GameData, RoomNumber);
 }
 
 function RestoreGameData(RoomNumber, UserUid)
@@ -224,7 +228,7 @@ function OnBetFighter(args, socket)
 {
     let { RoomNumber, FighterId, PlayerIndex} = args;
     let GameData = CacheRoomsData[RoomNumber];
-    
+
     let PlayerIndexOfList = GameData.PlayerList.findIndex((obj => obj.Index == PlayerIndex));
     let BetCredit = GameData.RoomConfig.MinBetCredit;
 
@@ -302,7 +306,7 @@ function OnBetFighter(args, socket)
                 TempCredit : GameData.PlayerList[PlayerIndexOfList].TempCredit,
             }
         }
-        p.socket.emit("AFTER_BET_ON_FIGHTER", {
+        p.Socket.emit("AFTER_BET_ON_FIGHTER", {
             IsSuccess: true,
             ErrorMessage: "",
             BetPlayerIndex: PlayerIndex,
@@ -310,41 +314,14 @@ function OnBetFighter(args, socket)
         })
     })
 
-    // 统计已下注人数
-    let BetPlayerCount = 0;
-    GameData.PlayerList.map(p => {
-        if (p.Status === "BETED") {
-            BetPlayerCount += 1;
-        }
-    })
-    if (BetPlayerCount == GameData.RoomConfig.RoomPlayerLimit)
-    {
-        // 下注阶段结束后翻开裁判牌 执行特殊效果
-        GameData.JudgerCardInfo.IsActive = true;
-        GameData = UpdataCardEffect.ActiveJudgeCardAfterPlayerBetStage(GameData);
-
-        // 进入出牌阶段
-        GameData.CurrentStage = "CARD";
-        // TODO: 出牌玩家顺序应该变更 目前为固定从最先进入房间的玩家开始
-        GameData.CurrentPlayerIndex = GameData.PlayerList[0].Index;
-        GameData.PlayerList.map(p=>{
-            p.Status = "NOT_FOLDED";
-            p.Socket.emit("CHANGE_GAME_STAGE", {
-                CurrentStage: GameData.CurrentStage,
-                PlayerStatus: p.Status,
-                CurrentPlayerIndex: GameData.CurrentPlayerIndex
-            });
-        })
-    }
-
     CacheRoomsData[RoomNumber] = GameData;
 }
 
 function OnPlayerEndBetFighters(args, socket)
 {
     const {RoomNumber, PlayerIndex} = args;
-    let PlayerIndexOfList = GameData.PlayerList.findIndex((obj => obj.Index == PlayerIndex));
     let GameData = CacheRoomsData[RoomNumber];
+    let PlayerIndexOfList = GameData.PlayerList.findIndex((obj => obj.Index == PlayerIndex));
 
     GameData.PlayerList[PlayerIndexOfList].Status = "BETED";
     GameData.CurrentPlayerIndex = 
@@ -361,6 +338,32 @@ function OnPlayerEndBetFighters(args, socket)
             CurrentPlayerIndex: GameData.CurrentPlayerIndex,
         });
     });
+
+    // 统计已下注人数
+    let BetPlayerCount = 0;
+    GameData.PlayerList.map(p => {
+        if (p.Status === "BETED") {
+            BetPlayerCount += 1;
+        }
+    })
+    if (BetPlayerCount == GameData.RoomConfig.RoomPlayerLimit)
+    {
+        // 下注阶段结束后翻开裁判牌 执行特殊效果
+        GameData.JudgerCardInfo.IsActive = true;
+        GameData = UpdataCardEffect.ActiveJudgeCardAfterPlayerBetStage(GameData);
+        // 进入出牌阶段
+        GameData.CurrentStage = "CARD";
+        // TODO: 出牌玩家顺序应该变更 目前为固定从最先进入房间的玩家开始
+        // GameData.CurrentPlayerIndex = GameData.PlayerList[0].Index;
+        GameData.PlayerList.map(p=>{
+            p.Status = "NOT_FOLDED";
+            p.Socket.emit("CHANGE_GAME_STAGE", {
+                CurrentStage: GameData.CurrentStage,
+                PlayerStatus: p.Status,
+                CurrentPlayerIndex: GameData.CurrentPlayerIndex
+            });
+        })
+    }
 
     CacheRoomsData[RoomNumber] = GameData;
 }
@@ -400,7 +403,7 @@ function OnPlayerCheckCard(args, socket)
             GameData.PlayerList,
             GameData.RoomConfig.RoomPlayerLimit,
         );
-    var t = GetRandomNewCard(GameData.PlayerList[PlayerIndexOfList].RemainCards)
+    var t = ToolFuncs.GetNextCard(GameData.PlayerList[PlayerIndexOfList].RemainCards)
     if (t !== null) {
         GameData.PlayerList[PlayerIndexOfList].HandCards.push(t);
     }
@@ -451,7 +454,7 @@ function OnPlayerFoldCard(args, socket)
 
     let PlayerIndexOfList = GameData.PlayerList.findIndex((obj => obj.Index == PlayerIndex));
     GameData.PlayerList[PlayerIndexOfList].Status = "FOLDED";
-    GameData.CurrentPlayerIndex = GetNextPlayerIndex(
+    GameData.CurrentPlayerIndex = ToolFuncs.GetNextPlayerIndex(
         GameData.CurrentPlayerIndex,
         GameData.PlayerList,
         GameData.RoomConfig.RoomPlayerLimit
@@ -513,7 +516,7 @@ function OnJudgeTableCards(RoomNumber)
 
     GameData.PlayerList.map(p => {
         p.Socket.emit("CHANGE_GAME_STAGE", {
-            CurrentStage,
+            CurrentStage: GameData.CurrentStage,
         })
       });
     // 判定阶段结束 进入结算阶段
@@ -541,7 +544,7 @@ function OnCalcStage(RoomNumber)
     })
 
     // 计算WinCredit和TempCredit
-    CalculateCredit(RoomNumber, CacheRoomsData[RoomNumber].WinFighterIdWinFighterId);
+    CalculateCredit(RoomNumber, CacheRoomsData[RoomNumber].WinFighterId);
 
     GameData = CacheRoomsData[RoomNumber]
     if (GameData.CurrentRound == GameData.RoomConfig.RoundLimit)
@@ -606,15 +609,31 @@ function CalculateCredit(RoomNumber, WinFighterId)
                 Rank: -1,
             })
         }
+        else
+        {
+            RoundRankList.push({
+                PlayerIndex: player.Index,
+                TempBetCredit: 0,
+                TotalWinCredit: player.WinCredit
+            })
+        }
     })
 
+    
     // 统计公共奖池收益
-    if (RoundRankList.length > 0)
-    {
-        RoundRankList.map(pb=>{
-            pb.TempBetCredit += GameData.PublicJackpot / RoundRankList.length
-        })
-    }
+    let BetCorrectPlayerCount = 0
+    RoundRankList.map(r=>{
+        if (r.TempBetCredit !== 0)
+        {
+            BetCorrectPlayerCount++;
+        }
+    })
+    RoundRankList.map(pb=>{
+        if (pb.TempBetCredit !== 0)
+        {
+            pb.TempBetCredit += GameData.PublicJackpot / BetCorrectPlayerCount
+        }
+    })
 
     // 累加剩余资金
     GameData.PlayerList.map(player=>{
@@ -657,7 +676,6 @@ function CalculateCredit(RoomNumber, WinFighterId)
             GameData.PlayerList[pIndex].WinCredit += 0;
         }
     })
-
     GameData.PlayerList.map(p=>{
         p.Socket.emit("SETTLE_IN_ROUND",{
             RoundRankList
@@ -704,6 +722,7 @@ function InitNewRound(RoomNumber)
     GameData.StartPlayerIndex = GameData.PlayerList[(GameData.StartPlayerIndex + 1) % GameData.RoomConfig.RoomPlayerLimit].Index;
     GameData.CurrentPlayerIndex = GameData.StartPlayerIndex;
     GameData.JudgerCardInfo = ToolFuncs.GetRandomNewJudger(JudgerList);
+    GameData.JudgerCardInfo.IsActive = false;
     GameData.PublicJackpot = 0;
     GameData.TableCardList = [];
     GameData.FighterInfoList = [...ToolFuncs.GetRandomNewFighters(FighterList, GameData.RoomConfig.FighterCountLimit)];
@@ -723,5 +742,5 @@ function InitNewRound(RoomNumber)
     })
 
     CacheRoomsData[RoomNumber] = GameData;
-    ToolFuncs.SendInitDataToAllPlayer(GameData);
+    ToolFuncs.SendInitDataToAllPlayer(GameData, RoomNumber);
 }

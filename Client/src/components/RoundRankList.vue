@@ -1,5 +1,5 @@
 <template>
-    <el-table :data="tData" style="width: 100%">
+    <el-table :key="IsUpdate" :data="TableData" style="width: 100%">
         <el-table-column prop="Rank" label="排名"> </el-table-column>
         <el-table-column prop="PlayerIndex" label="玩家序号"> </el-table-column>
         <el-table-column prop="TempBetCredit" label="回合获得资金"> </el-table-column>
@@ -12,13 +12,14 @@
 export default {
     name: "RoundRankList",
     props: {
-        data: Object
+        data: Object,
     },
     data() {
         // eslint-disable-next-line
-        console.log(this.$parent.data);
+        console.log(this.$parent.data.data);
         return {
-            tData: this.$parent.data
+            IsUpdate:  this.$parent.data.IsUpdate,
+            TableData: this.$parent.data.data
         }
     }
 };

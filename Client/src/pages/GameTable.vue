@@ -25,7 +25,7 @@
                 <div class="room_info_area">
                     <RoomInfo 
                         :CurrentRound="GameData.CurrentRound" 
-                        :RoundNumLimit="(GameConfig.RoundNumLimit || -1)"
+                        :RoundLimit="(GameConfig.RoundLimit || -1)"
                         :PublicJackpot="GameData.PublicJackpot" 
                         :CurrentStage="GameData.CurrentStage" 
                     />
@@ -175,6 +175,7 @@ export default {
             IsShowAnimCanvas: false,
             WindoeWidth: 1920,
             WindowHeight: 1080,
+            IsUpdateRankList: false,
 
             UserUid: new Date().getTime(),
             CurrChosenHandCardId: -1,
@@ -285,8 +286,8 @@ export default {
         this.WindowHeight = window.innerHeight;
 
         window.onresize = () => {
-        this.WindowWidth = window.innerWidth;
-        this.WindowHeight = window.innerHeight;
+            this.WindowWidth = window.innerWidth;
+            this.WindowHeight = window.innerHeight;
         };
         // 注册使用手牌的事件
         this.RegisterUseCardEvent();
@@ -529,11 +530,19 @@ export default {
         // 回合结束后展示排行
         OnRoundEnd(res)
         {
-            this.GameData.RankList = res.RoundRankList
+            this.GameData.RankList = res.RoundRankList;
+            this.IsUpdateRankList = true;
             this.$msgbox({
                 title: "回合结算",
                 message: <RoundRankList ref="RoundRankList"/>,
-                data: this.GameData.RankList
+                data: {
+                    IsUpdate: this.IsUpdateRankList, 
+                    data: this.GameData.RankList
+                },
+                beforeClose: (action, instance, done) => {
+                    this.IsUpdateRankList = false;
+                    done();
+                }
             })
         },
 
@@ -541,10 +550,18 @@ export default {
         OnGameEnd(res)
         {
             this.GameData.RankList = res.RankList
+            this.IsUpdateRankList = true;
             this.$msgbox({
-                title: "回合结算",
+                title: "游戏结算",
                 message: <GameEndRankList ref="GameEndRankList"/>,
-                data: this.GameData.RankList
+                data: {
+                    IsUpdate: this.IsUpdateRankList, 
+                    data: this.GameData.RankList
+                },
+                beforeClose: (action, instance, done) => {
+                    this.IsUpdateRankList = false;
+                    done();
+                }
             })
         },
 

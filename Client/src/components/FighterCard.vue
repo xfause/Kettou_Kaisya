@@ -104,7 +104,6 @@ export default {
     },
     OnBetFighter() 
     {
-      // TODO
       this.$socket.emit("COMMAND", {
         type: "BET_ON_FIGHTER",
         RoomNumber: this.RoomNumber,
