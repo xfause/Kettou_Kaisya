@@ -24,6 +24,7 @@ const {
 // Import functionality
 let ToolFuncs = require("./Scripts/Tools")
 let UpdataCardEffect = require("./Scripts/UpdateCardEffect");
+let BattleField = require("./Scripts/BattleField");
 
 // Server Data
 const WaitPairQueue = []; // 等待排序的队列
@@ -52,6 +53,8 @@ module.exports = function handleSynchronousClient(args, socket, socketServer)
         case "PLAYER_FOLD_CARD":
             OnPlayerFoldCard(args, socket);
             break;
+        case "PLAYER_USE_CARD":
+            OnPlayerUseCard(args, socket);
     }
 }
 
@@ -138,6 +141,7 @@ function ConnectToRoom(args, socket, socketServer)
 function InitGameData(RoomNumber)
 {
     let GameData = {};
+    GameData.BattleField = new BattleField();
     GameData.Seed = CacheRoomsData[RoomNumber].Seed;
     GameData.RandFunc = CacheRoomsData[RoomNumber].RandFunc;
     GameData.FighterStatusList = CacheRoomsData[RoomNumber].FighterStatusList;
@@ -498,6 +502,24 @@ function OnPlayerFoldCard(args, socket)
         })
         CacheRoomsData[RoomNumber] = GameData;
     }
+}
+
+function OnPlayerUseCard(args, socket)
+{
+    const {RoomNumber, PlayerIndex, UsedCardId, UseInfo} = args;
+    let GameData = CacheRoomsData[RoomNumber];
+    let pIdx = GameData.PlayerList.findIndex(obj=> obj.Index == PlayerIndex);
+    let cIdx = GameData.PlayerList[pIdx].HandCards.findIndex(obj=> obj.Id == UsedCardId);
+    let UsedCard = GameData.PlayerList[pIdx].HandCards(cIdx);
+    // 向使用信息中加入更多需要的信息
+    UseInfo.PlayerIndex = PlayerIndex;
+    
+    GameData = GameData.BattleField.OnPlayerUseCard(
+        GameData,
+        UsedCard,
+        UseInfo
+    )
+    // TODO: Send Updated Data
 }
 
 function OnJudgeTableCards(RoomNumber)

@@ -1,6 +1,6 @@
 <template>
   <div
-    ref="cardDom"
+    ref="CardDom"
     class="card"
     @mousedown="mouseDown($event)"
     @mouseup="mouseUp($event)"
@@ -26,7 +26,7 @@ export default {
     return {};
   },
   mounted() {
-    this.cardDom = this.$refs["cardDom"];
+    this.CardDom = this.$refs["CardDom"];
   },
   computed: {
     id() {
@@ -48,7 +48,7 @@ export default {
       return null;
     },
     IsNoTargetDrag() {
-      return false;
+      return true;
       // if (
       //   this.playerStatus == "NOT_FOLDED") {
       //   if (this.CurrentRoomStage == "CARD") {
@@ -65,7 +65,7 @@ export default {
       // }
     },
     IsTargetDrag() {
-      return true;
+      return false;
       // if (
       //   this.playerStatus == "NOT_FOLDED") {
       //   if (this.roomStatus == "CARD") {
@@ -84,10 +84,12 @@ export default {
   },
   methods: {
     mouseUp(e){
+      console.log(this.IsNoTargetDrag)
       if (this.IsNoTargetDrag) {
         this.noTargetDrag = false;
-        this.cardDom.style["transition"] = "all 0s";
-        this.cardDom.style["transform"] = `translate(${
+        
+        this.CardDom.style["transition"] = "all 0s";
+        this.CardDom.style["transform"] = `translate(${
           e.pageX
         }px, ${e.pageY}px) scale(1.0)`;
       }
@@ -97,7 +99,7 @@ export default {
         this.noTargetDrag = true;
         window.IsNoTargetDrag = true;
 
-        this.cardDom.style["transition"] = "all 0s";
+        this.CardDom.style["transition"] = "all 0s";
 
         this.startX = e.pageX;
         this.startY = e.pageY;
@@ -108,12 +110,12 @@ export default {
 
         this.OnOutCardLoop();
       } else if (this.IsTargetDrag) {
-        window.IsTargetDrag = true;
         window.HandCardTargetType = this.targetType;
 
         this.$emit("OnClientUseCardStart", {
           startX: e.pageX,
           startY: e.pageY,
+          targetType: this.targetType
         });
       }
 
@@ -124,11 +126,11 @@ export default {
     OnOutCardLoop() {
       if (this.noTargetDrag) {
         requestAnimationFrame(this.OnOutCardLoop);
-        this.cardDom.style["transform"] = `translate(${
+        this.CardDom.style["transform"] = `translate(${
           window.cardMoveX - this.startX
         }px, ${window.cardMoveY - this.startY}px) scale(1.1)`;
       } else {
-        this.cardDom.style["transform"] = "";
+        this.CardDom.style["transform"] = "";
       }
     },
   },

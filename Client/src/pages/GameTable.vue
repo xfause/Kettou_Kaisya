@@ -600,10 +600,12 @@ export default {
             this.CurrChosenHandCardId = id;
         },
         // 客户端拖拽使用卡牌
-        OnClientUseCardStart({ startX, startY }) {
+        OnClientUseCardStart({ startX, startY, targetType }) {
             this.IsShowAnimCanvas = true;
             this.useCardStartX = startX;
             this.useCardStartY = startY;
+            window.IsTargetDrag = true;
+            window.HandCardTargetType = targetType;
         },
         // 注册使用卡牌的事件
         RegisterUseCardEvent()
@@ -676,58 +678,26 @@ export default {
                     y = e.pageY;
 
                 if (x > left && x < left + width && y > top && y < top + height) {
-                    // TODO
                     let bCanUseCard = true;
                     if (!bCanUseCard) {
-                        // Can't use card
-                        // this.$prompt("请输入本回合初次出牌金额", {
-                        //     confirmButtonText: "确定",
-                        //     cancelButtonText: "取消",
-                        //     inputValidator: (value) => {
-                        //     if (!new RegExp("^[0-9]*[1-9][0-9]*$").test(value)) {
-                        //         return "必须是正整数";
-                        //     }
-                        //     if (value <= 0) {
-                        //         return "出牌金额必须大于0";
-                        //     } else if (value < this.gameData.preUseCardFee) {
-                        //         return (
-                        //         "上一次出牌金额为:" +
-                        //         this.gameData.preUseCardFee +
-                        //         ", 必须大于它"
-                        //         );
-                        //     }
-                        //     },
-                        // })
-                        //     .then(async ({ value }) => {
-                        //     this.$socket.emit("COMMAND", {
-                        //         type: "USE_CARD",
-                        //         roomNumber: this.gameData.roomNumber,
-                        //         memberIndex: this.gameData.memberIndex,
-                        //         cardId: this.currentChosenHandCardId,
-                        //         useCardFee: parseInt(value),
-                        //         needTarget: false,
-                        //         targetType: "N/A",
-                        //         targetId: -1,
-                        //     });
-                        //     })
-                        //     .catch(() => {
-                        //     this.$message({
-                        //         type: "info",
-                        //         message: "取消出牌",
-                        //     });
-                        //     });
+                        this.$message({
+                            showClose: false,
+                            message: "无法出牌",
+                            type: 'error'
+                        });
                     } else {
-                        // Can use card
-                        // this.$socket.emit("COMMAND", {
-                        //     type: "USE_CARD",
-                        //     roomNumber: this.gameData.roomNumber,
-                        //     memberIndex: this.gameData.memberIndex,
-                        //     cardId: this.currentChosenHandCardId,
-                        //     useCardFee: -1,
-                        //     needTarget: false,
-                        //     targetType: "N/A",
-                        //     targetId: -1,
-                        // });
+                        // TODO
+                        this.$socket.emit("COMMAND", {
+                            type: "PLAYER_USE_CARD",
+                            RoomNumber: this.GameData.RoomNumber,
+                            PlayerIndex: this.GameData.Index,
+                            UsedCardId: this.CurrChosenHandCardId,
+                            UseInfo: {
+                                IsNeedTarget: false,
+                                TargetType: "N/A",
+                                TargetId: -1
+                            }
+                        });
                     }
                 }
 
@@ -748,18 +718,18 @@ export default {
                         y = e.pageY, // 鼠标松开的y
                         k = -1; // 用于记录找到的卡牌的index
 
-                    let targetAreaDom;
+                    let TargetAreaDom;
                     if (window.HandCardTargetType == "TABLE") {
-                        targetAreaDom = this.TableAreaDom;
+                        TargetAreaDom = this.TableAreaDom;
                     }
                     if (window.HandCardTargetType == "FIGHTER") {
-                        targetAreaDom = this.FighterAreaDom;
+                        TargetAreaDom = this.FighterAreaDom;
                     }
                     if (window.HandCardTargetType == "OTHER_PLAYER") {
-                        targetAreaDom = this.OtherPlayerAreaDom;
+                        TargetAreaDom = this.OtherPlayerAreaDom;
                     }
                     if (window.HandCardTargetType == "PLAYER") {
-                        targetAreaDom = this.PlayerAreaDom;
+                        TargetAreaDom = this.PlayerAreaDom;
                     }
                     if (window.HandCardTargetType == null) {
                         return;
@@ -778,13 +748,38 @@ export default {
                             let bCanUseCard = true;
                             if (!bCanUseCard) {
                                 // TODO
+                                console.log("target use - can not use")
+                                this.$message({
+                                    showClose: false,
+                                    message: "无法出牌",
+                                    type: 'error'
+                                });
                             } else {
-                                k = cd.dataset.id;
+                                k = cd.dataset.Id;
                                 // // console.log("use target card success");
                                 // // console.log("card id:" , this.currentChosenHandCardId);
                                 
                                 // eslint-disable-next-line no-console
+                                console.log("target use - can use")
+                                // eslint-disable-next-line no-console
                                 console.log("target id:" , k);
+
+                                let cIdx = this.GameData.HandCards.findIndex(
+                                    obj=> obj.Id == this.CurrChosenHandCardId
+                                )
+                                this.$socket.emit("COMMAND", {
+                                    type: "PLAYER_USE_CARD",
+                                    RoomNumber: this.GameData.RoomNumber,
+                                    PlayerIndex: this.GameData.Index,
+                                    UsedCardId: this.CurrChosenHandCardId,
+                                    UseInfo: {
+                                        IsNeedTarget: true,
+                                        // TODO
+                                        TargetType: HandCardTargetType,
+                                        // TODO
+                                        TargetId: k
+                                    }
+                                });
 
                                 // let cI = this.gameData.handCards.findIndex(
                                 // (obj) => obj.id == this.currentChosenHandCardId
