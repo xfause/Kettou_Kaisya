@@ -24,7 +24,7 @@ class BattleField
         }
         else 
         {
-            UpdateQueue.push(item);
+            this.UpdateQueue.push(item);
         }
     }
     PopUpdateQueue()
@@ -35,7 +35,7 @@ class BattleField
     // 管理Queue内容
     OnPlayerUseCard(GameData, UsedCard, UseInfo)
     {
-        this.UpdateQueue.PushUpdateQueue({
+        this.PushUpdateQueue({
             Type: "OnAfterUseCard",
             UsedCard, UseInfo,
             CurrCard: UsedCard
@@ -46,7 +46,7 @@ class BattleField
             let tc = GameData.TableCardList[idx];
             if (tc.OnAfterUseOtherCard)
             {
-                this.UpdateQueue.PushUpdateQueue({
+                this.PushUpdateQueue({
                     Type: "OnAfterUseOtherCard",
                     UsedCard, UseInfo,
                     CurrCard: tc
@@ -60,7 +60,7 @@ class BattleField
             {
                 if (p.HandCards[cIdx].OnAfterUseOtherCard)
                 {
-                    this.UpdateQueue.PushUpdateQueue({
+                    this.PushUpdateQueue({
                         Type: "OnAfterUseOtherCard",
                         UsedCard, UseInfo,
                         CurrCard: p.HandCards[cIdx]
@@ -68,7 +68,7 @@ class BattleField
                 }
             }
         }
-        let TmpGameData = UpdateBattleField(GameData);
+        let TmpGameData = this.UpdateBattleField(GameData);
         return TmpGameData;
     }
 
@@ -102,8 +102,10 @@ class BattleField
             {
 
             }
-            PopUpdateQueue();
+            this.PopUpdateQueue();
         }
         return TmpGameData;
     }
 }
+
+module.exports = BattleField;
