@@ -7,7 +7,7 @@ const CardList = [
       IsActive: false,
       IsNeedTarget: true,
       TargetType: "Fighter",
-      OnAfterUseCard: (GameData, UpdateQueue, CurrCard, UseInfo)=>{
+      OnAfterUseCard: function(GameData, UpdateQueue, CurrCard, UseInfo){
         const { TargetType, TargetId, PlayerIndex } = UseInfo;
         let tGameData = {...GameData};
         if (TargetType == "FIGHTER")

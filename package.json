@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "card-game-client": "file:Client"
+  }
+}

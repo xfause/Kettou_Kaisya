@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 */node_modules/
+node_modules/.bin
 
 # Package files
 package-lock.json
